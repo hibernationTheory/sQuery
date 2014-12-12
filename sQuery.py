@@ -6,7 +6,6 @@ class SceneQuery(object):
     def __init__(self,data=[], context=None):
         self._data = data
         self._main(self._data)
-        print self._data
 
     def __str__(self):
         for i in self._data:
@@ -272,7 +271,7 @@ class SceneQuery(object):
 
     def _createNodeBeforeGivenNode(self, givenNode, **kwargs):
         nodeCreated = self._createNodeInsideParent(givenNode.parent(), **kwargs)
-        _insertNode(**{
+        self._insertNode(**{
             "nodeToInsert":nodeCreated,
             "targetNode":givenNode,
             "location":"before",
@@ -283,7 +282,7 @@ class SceneQuery(object):
 
     def _createNodeAfterGivenNode(self, givenNode, **kwargs):
         nodeCreated = self._createNodeInsideParent(givenNode.parent(), **kwargs)
-        _insertNode(**{
+        self._insertNode(**{
             "nodeToInsert":nodeCreated,
             "targetNode":givenNode,
             "location":"after",
@@ -292,7 +291,7 @@ class SceneQuery(object):
 
         return nodeCreated
 
-    def _insertNode(**kwargs):
+    def _insertNode(self, **kwargs):
         nodeToInsert = kwargs.get("nodeToInsert", None)
         targetNode = kwargs.get("targetNode", None)
         location = kwargs.get("location", "before")
