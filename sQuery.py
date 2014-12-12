@@ -6,6 +6,7 @@ class SceneQuery(object):
     def __init__(self,data=[], context=None):
         self._data = data
         self._main(self._data)
+        print self._main
 
     def __str__(self):
         for i in self._data:
@@ -212,6 +213,14 @@ class SceneQuery(object):
             "data":self._data,
              "attr":"setRenderFlag",
              "value":value
+            })
+        return SceneQuery(data=self._data)
+
+    def setSelected(self):
+        self._callAttr(**{
+            "data":self._data,
+             "attr":"setSelected",
+             "value":True
             })
         return SceneQuery(data=self._data)
 
