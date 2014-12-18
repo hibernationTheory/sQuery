@@ -6,7 +6,7 @@ class SceneQuery(object):
     def __init__(self,data=[], context=None):
         self._data = data
         self._main(self._data)
-        print self._main
+        print self._data
 
     def __str__(self):
         for i in self._data:
@@ -35,6 +35,9 @@ class SceneQuery(object):
 
         return env
 
+    def _cleanupData(self):
+        pass
+
     def _initHoudini(self, context):
         #print "\nfunc _initHoudini"
 
@@ -45,11 +48,26 @@ class SceneQuery(object):
     def selectByType(self, filterName):
         #print "\nfunc selectByType"
 
+        if not filterName:
+            return None
+
+        filterFunction = None
+        filterFunctionKwargs = {}
+        filterValue = filterName
+
+        if filterName.find("*") != -1:
+            filterFunction = self._fnmatchHouObj
+            filterFunctionKwargs = {"pattern":filterName}
+            filterValue = True
+
         returnData = self._filterData(**{
             "data":self._data,
             "callback":self._getAttrMultiple,
             "callbackKwargs":{"methods":["type", "name"]},
             "filterValue":filterName,
+            "filterFunction":filterFunction,
+            "filterFunctionKwargs":filterFunctionKwargs,
+            "filterValue":filterValue
             })
 
         return SceneQuery(data=returnData)
@@ -80,26 +98,6 @@ class SceneQuery(object):
             })
 
         return SceneQuery(data=returnData)
-
-    def parm(self, parmName, parmValue = None):
-        #print "\nfunc parm"
-
-        returnData = []
-        for i in self._data:
-            parm = i.parm(parmName)
-            if parmValue:
-                parm.set(parmValue)
-            returnData.append(parm)
-
-        return SceneQuery(data=returnData)
-
-    def setParmValue(self, parmValue):
-        self._callAttr(**{
-            "data":self._data,
-             "attr":"set",
-             "value":parmValue
-            })
-        return SceneQuery(data=self._data)
 
     def children(self):
         #print "\nfunc children"
@@ -135,6 +133,44 @@ class SceneQuery(object):
                     returnData.append(i)
 
         return SceneQuery(data=returnData)
+
+    #################
+    # PARM STUFF
+    #################
+
+    def parm(self, parmName, parmValue = None):
+        #print "\nfunc parm"
+
+        returnData = []
+        for i in self._data:
+            parm = i.parm(parmName)
+            if parmValue:
+                parm.set(parmValue)
+            returnData.append(parm)
+
+        return SceneQuery(data=returnData)
+
+    def setParmValue(self, parmValue):
+        self._callAttr(**{
+            "data":self._data,
+             "attr":"set",
+             "value":parmValue
+            })
+        return SceneQuery(data=self._data)
+
+    def replaceParmValue(self, parmValue, targetValue):
+        for i in self._data:
+            value = i.eval()
+            newValue = value.replace(parmValue, targetValue)
+            i.set(newValue)
+        return SceneQuery(data=self._data)
+
+    def evalParm(self):
+        values = self._callAttr(**{
+            "data":self._data,
+             "attr":"eval",
+            })
+        return SceneQuery(data=values)
 
     #################
     # BUNDLE STUFF
@@ -216,11 +252,11 @@ class SceneQuery(object):
             })
         return SceneQuery(data=self._data)
 
-    def setSelected(self):
+    def setSelected(self, value):
         self._callAttr(**{
             "data":self._data,
              "attr":"setSelected",
-             "value":True
+             "value":value
             })
         return SceneQuery(data=self._data)
 
@@ -365,14 +401,20 @@ class SceneQuery(object):
         attr = kwargs.get("attr", None)
         value = kwargs.get("value", None)
 
+        returnData = []
+
         if not data or not attr:
-            return []
+            return returnData
 
         for i in data:
-            if value:
-                getattr(i, attr)(value)
+            if value != None:
+                result = getattr(i, attr)(value)
+                if result != None: returnData.append(result)
             else:
-                getattr(i, attr)()
+                result = getattr(i, attr)()
+                if result != None: returnData.append(result)
+
+        return returnData
 
 
     def _filterData(self, **kwargs):
@@ -399,17 +441,17 @@ class SceneQuery(object):
             if filterFunction and filterValue:
                 filterResult = filterFunction(i, **filterFunctionKwargs)
                 if filterResult == filterValue:
-                    returnData.append(i)
+                    if i:returnData.append(i)
 
             elif not filterFunction and filterValue:
                 if result == filterValue:
-                    returnData.append(i)
+                    if i:returnData.append(i)
 
             elif filterFunction and not filterValue: # this condition doesn't make sense actually
-                returnData.append(i) 
+                if i:returnData.append(i) 
 
             else: # if not filter function action happening
-                returnData.append(result)
+                if result:returnData.append(result)
 
         return returnData
 
