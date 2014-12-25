@@ -222,6 +222,110 @@ class HoudiniQuery(SQueryCommon):
 
         return HoudiniQuery(data=returnData)
 
+    def add(self):
+        """
+        Create a new jQuery object with elements added to the set of matched elements.
+        """
+        pass
+
+    def addBack(self):
+        """
+        Add the previous set of elements on the stack to the current set, optionally filtered by a selector.
+        """
+        pass
+
+    def addAttr(self):
+        """
+        Adds the specified class(es) to each of the set of matched elements.
+        """
+        pass
+
+    def after(self):
+        """
+        Insert content, specified by the parameter, after each element in the set of matched elements.
+        """
+        pass
+
+    def attr(self):
+        """
+        Get the value of an attribute for the first element in the set of matched elements or set one or more attributes for every matched element.
+        """
+        pass
+
+    def clone(self):
+        """
+        Create a deep copy of the set of matched elements.
+        """
+        pass
+
+    def empty(self):
+        """
+        Remove all child nodes of the set of matched elements from the DOM.
+        """
+        pass
+
+    def filter(self):
+        """
+        Reduce the set of matched elements to those that match the selector or pass the function's test.
+        """
+        pass
+
+    def find(self):
+        """
+        Get the descendants of each element in the current set of matched elements, filtered by a selector, jQuery object, or element.
+        """
+        pass
+
+    def first(self):
+        """
+        Reduce the set of matched elements to the first in the set.
+        """
+        pass
+
+    def has(self):
+        """
+        Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
+        """
+        pass
+
+    def hide(self):
+        """
+        Hide the matched elements.
+        """
+        pass
+
+    def _is(self):
+        """
+        Check the current matched set of elements against a selector, element, or jQuery object and return true 
+        if at least one of these elements matches the given arguments
+        """
+        pass
+
+    def next(self):
+        """
+        Get the immediately following sibling of each element in the set of matched elements. 
+        If a selector is provided, it retrieves the next sibling only if it matches that selector.
+        """
+        pass
+
+    def nextAll(self):
+        """
+        Get all following siblings of each element in the set of matched elements, optionally filtered by a selector.
+        """
+        pass
+
+    def _not(self):
+        """
+        Remove elements from the set of matched elements.
+        """
+        pass
+
+    def parent(self):
+        """
+        Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
+        """
+        pass
+
 class _SceneQuery(object):
     def __init__(self,data=[], initValue=None):
         self._data = data
