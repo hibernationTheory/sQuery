@@ -8,6 +8,11 @@ def sQuery(initValue=None):
                 initValue = "obj"
             queryObject = HoudiniQuery(initValue=initValue)
             return queryObject
+        if env == "maya":
+            if not initValue:
+                initValue = "root"
+            queryObject = MayaQuery(initValue=initValue, module = None)
+            return queryObject
 
     env = None
     try:
@@ -19,6 +24,12 @@ def sQuery(initValue=None):
     try:
         import nuke
         env = "nuke"
+    except ImportError:
+        pass
+
+    try:
+        import pymel.core as pc
+        env = "maya"
     except ImportError:
         pass
 
@@ -92,6 +103,36 @@ class SQueryCommon(object):
 
         return returnData
 
+class MayaQuery(SQueryCommon):
+    def __init__(self, initValue=None, data=[], module=None):
+        SQueryCommon.__init__(self, data, initValue)
+        import pymel.core as pc
+        self.pc =  pc
+        self._data = data
+        self._module = module
+        print self._data
+        print dir()
+
+        if initValue:
+            self._init(initValue)
+
+    def _init(self, initValue):
+        #print "\nfunc _init"
+
+        if initValue == "root":
+            print "aa"
+            self._data = self.pc.ls()
+
+    def children(self):
+        #print "\nfunc children"
+
+        returnData = []
+        for data in self._data:
+            for child in data.children():
+                returnData.append(child)
+
+        return SceneQuery(data=returnData)
+
 class HoudiniQuery(SQueryCommon):
     def __init__(self, initValue=None, data=[]):
         SQueryCommon.__init__(self, data, initValue)
@@ -99,15 +140,10 @@ class HoudiniQuery(SQueryCommon):
         print self._data
 
         if initValue:
-            self._initHoudini(initValue)
+            self._init(initValue)
 
-    def printData(self):
-        for i in self._data:
-            print i
-
-    def _initHoudini(self, initValue):
-        #print "\nfunc _initHoudini"
-        #! seems broken
+    def _init(self, initValue):
+        #print "\nfunc _init"
 
         contexts = ["obj", "shop", "out"]
         if initValue in contexts:
