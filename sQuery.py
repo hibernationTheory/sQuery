@@ -50,20 +50,30 @@ class SQueryCommon(object):
         attr = kwargs.get("attr", None)
         value = kwargs.get("value", None)
 
-        returnData = []
+        returnData = None
 
         if not data or not attr:
+            return None
+
+        if value != None:
+            result = getattr(data, attr)(value)
+            if result != None: return result
+        else:
+            result = getattr(data, attr)()
+            if result != None: return result
+
+        return returnData
+
+    def _callAttrOnMultiple(self, **kwargs):
+        data = kwargs.get("data", None)
+        returnData = []
+        if not data:
             return returnData
 
         for i in data:
-            if value != None:
-                result = getattr(i, attr)(value)
-                if result != None: returnData.append(result)
-            else:
-                result = getattr(i, attr)()
-                if result != None: returnData.append(result)
-
-        return returnData
+            newKwargs = kwargs.copy()
+            newKwargs["data"] = i
+            self._callAttr(**newKwargs)
 
     def _getAttrMultiple(self, node, **kwargs):
         #print "\nfunc _getAttrMultiple"
@@ -131,29 +141,8 @@ class SQueryCommon(object):
         result = fnmatch.fnmatch(name, pattern)
         return result
 
-class MayaQuery(SQueryCommon):
-    def __init__(self, initValue=None, data=[], module=None):
-        SQueryCommon.__init__(self, data, initValue)
-
-        # pc wouldn't get registered in this object
-        # even though it gets instantiated in sQueryCommon
-        # need to investigate
-        self.pc = pc 
-        self._data = data
-        self._module = module
-        print self._data
-
-        if initValue:
-            self._init(initValue)
-
-    def _init(self, initValue):
-        #print "\nfunc _init"
-
-        if initValue == "root":
-            self._data = self.pc.ls()
-
 class HoudiniQuery(SQueryCommon):
-    def __init__(self, initValue=None, data=[]):
+    def __init__(self, initValue=None, data=[], prevData = []):
         SQueryCommon.__init__(self, data, initValue)
         self._data = data
         print self._data
@@ -222,6 +211,125 @@ class HoudiniQuery(SQueryCommon):
 
         return HoudiniQuery(data=returnData)
 
+
+    #################
+    # CONTENT FILTERS
+    #################
+
+    def parmEqualTo(self, targetValue):
+        #print "\nfunc parmEqualTo"
+        returnData = []
+        for i in self._data:
+            value = i.eval()
+            if value == targetValue:
+                returnData.append(i)
+
+        return HoudiniQuery(data=returnData)
+
+    def parmContains(self, targetValue):
+        #print "\nfunc parmContains"
+        returnData = []
+        for i in self._data:
+            value = i.eval()
+            if isinstance(value, str):
+                if value.find(targetValue) != -1:
+                    returnData.append(i)
+
+        return HoudiniQuery(data=returnData)
+
+    #################
+    # PARM STUFF
+    #################
+
+    def parm(self, parmName, parmValue = None):
+        #print "\nfunc parm"
+
+        returnData = []
+        for i in self._data:
+            parm = i.parm(parmName)
+            if parmValue:
+                parm.set(parmValue)
+            returnData.append(parm)
+
+        return HoudiniQuery(data=returnData)
+
+    def setParmValue(self, parmValue):
+        self._callAttrOnMultiple(**{
+            "data":self._data,
+             "attr":"set",
+             "value":parmValue
+            })
+        return HoudiniQuery(data=self._data)
+
+    def replaceParmValue(self, parmValue, targetValue):
+        for i in self._data:
+            value = i.eval()
+            newValue = value.replace(parmValue, targetValue)
+            i.set(newValue)
+        return HoudiniQuery(data=self._data)
+
+    def evalParm(self):
+        values = self._callAttrOnMultiple(**{
+            "data":self._data,
+             "attr":"eval",
+            })
+        return HoudiniQuery(data=values)
+
+    #################
+    # BUNDLE STUFF
+    #################
+
+    def checkBundle(self, value):
+        """given the string value, checks if a bundle exists with the name"""
+        bundles = hou.nodeBundles()
+        bundleNames = [bundle.name() for bundle in bundles]
+
+        if value in bundleNames:
+            return True
+        else: return False
+
+    def addToBundle(self, bundleName):
+        for data in self._data:
+            filteredData = self._filterData(**{
+                "data":data,
+                "callback":self._addNodeToBundle,
+                "callbackKwargs":{"bundleName":bundleName},
+                })
+
+        return HoudiniQuery(data=self._data)
+
+    def removeFromBundle(self, bundleName):
+        for data in self._data:
+            filteredData = self._filterData(**{
+                "data":self._data,
+                "callback":self._removeNodeFromBundle,
+                "callbackKwargs":{"bundleName":bundleName},
+                })
+
+        return HoudiniQuery(data=self._data)
+
+    def _addNodeToBundle(self, node, **kwargs):
+        bundleName = kwargs.get("bundleName", None)
+        if not bundleName:
+            return None
+
+        bundle = hou.nodeBundle(bundleName)
+        if not bundle:
+            hou.hscript('opbadd "%s"' % bundleName)
+            bundle = hou.nodeBundle(bundleName)
+        if not bundle.containsNode(node):
+            bundle.addNode(node)
+
+    def _removeNodeFromBundle(self, node, **kwargs):
+        bundleName = kwargs.get("bundleName", None)
+        if not bundleName:
+            return None
+
+        bundle = hou.nodeBundle(bundleName)
+        if not bundle or not bundle.containsNode(node):
+            return None
+        bundle.removeNode(node)
+
     def add(self):
         """
         Create a new jQuery object with elements added to the set of matched elements.
@@ -265,13 +373,13 @@ class HoudiniQuery(SQueryCommon):
         pass
 
     def filter(self):
-        """
+        """!
         Reduce the set of matched elements to those that match the selector or pass the function's test.
         """
         pass
 
     def find(self):
-        """
+        """!
         Get the descendants of each element in the current set of matched elements, filtered by a selector, jQuery object, or element.
         """
         pass
@@ -289,7 +397,7 @@ class HoudiniQuery(SQueryCommon):
         pass
 
     def hide(self):
-        """
+        """!
         Hide the matched elements.
         """
         pass
@@ -321,7 +429,7 @@ class HoudiniQuery(SQueryCommon):
         pass
 
     def parent(self):
-        """
+        """!
         Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
         """
         pass
@@ -337,186 +445,6 @@ class _SceneQuery(object):
 
     def _cleanupData(self):
         pass
-
-    def selectByType(self, filterName):
-        #print "\nfunc selectByType"
-
-        if not filterName:
-            return None
-
-        filterFunction = None
-        filterFunctionKwargs = {}
-        filterValue = filterName
-
-        if filterName.find("*") != -1:
-            filterFunction = self._fnmatchHouObj
-            filterFunctionKwargs = {"pattern":filterName}
-            filterValue = True
-
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._getAttrMultiple,
-            "callbackKwargs":{"methods":["type", "name"]},
-            "filterValue":filterName,
-            "filterFunction":filterFunction,
-            "filterFunctionKwargs":filterFunctionKwargs,
-            "filterValue":filterValue
-            })
-
-        return SceneQuery(data=returnData)
-
-    def selectByName(self, filterName):
-        #print "\nfunc selectByName"
-
-        if not filterName:
-            return None
-
-        filterFunction = None
-        filterFunctionKwargs = {}
-        filterValue = filterName
-
-        if filterName.find("*") != -1:
-            filterFunction = self._fnmatchHouObj
-            filterFunctionKwargs = {"pattern":filterName}
-            filterValue = True
-
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._getAttrMultiple,
-            "callbackKwargs":{"methods":["name"]},
-            "filterValue":filterName,
-            "filterFunction":filterFunction,
-            "filterFunctionKwargs":filterFunctionKwargs,
-            "filterValue":filterValue
-            })
-
-        return SceneQuery(data=returnData)
-
-    def children(self):
-        #print "\nfunc children"
-
-        returnData = []
-        for data in self._data:
-            for child in data.children():
-                returnData.append(child)
-
-        return SceneQuery(data=returnData)
-
-    #################
-    # CONTENT FILTERS
-    #################
-
-    def parmEqualTo(self, targetValue):
-        #print "\nfunc parmEqualTo"
-        returnData = []
-        for i in self._data:
-            value = i.eval()
-            if value == targetValue:
-                returnData.append(i)
-
-        return SceneQuery(data=returnData)
-
-    def parmContains(self, targetValue):
-        #print "\nfunc parmContains"
-        returnData = []
-        for i in self._data:
-            value = i.eval()
-            if isinstance(value, str):
-                if value.find(targetValue) != -1:
-                    returnData.append(i)
-
-        return SceneQuery(data=returnData)
-
-    #################
-    # PARM STUFF
-    #################
-
-    def parm(self, parmName, parmValue = None):
-        #print "\nfunc parm"
-
-        returnData = []
-        for i in self._data:
-            parm = i.parm(parmName)
-            if parmValue:
-                parm.set(parmValue)
-            returnData.append(parm)
-
-        return SceneQuery(data=returnData)
-
-    def setParmValue(self, parmValue):
-        self._callAttr(**{
-            "data":self._data,
-             "attr":"set",
-             "value":parmValue
-            })
-        return SceneQuery(data=self._data)
-
-    def replaceParmValue(self, parmValue, targetValue):
-        for i in self._data:
-            value = i.eval()
-            newValue = value.replace(parmValue, targetValue)
-            i.set(newValue)
-        return SceneQuery(data=self._data)
-
-    def evalParm(self):
-        values = self._callAttr(**{
-            "data":self._data,
-             "attr":"eval",
-            })
-        return SceneQuery(data=values)
-
-    #################
-    # BUNDLE STUFF
-    #################
-
-    def checkBundle(self, value):
-        """given the string value, checks if a bundle exists with the name"""
-        bundles = hou.nodeBundles()
-        bundleNames = [bundle.name() for bundle in bundles]
-
-        if value in bundleNames:
-            return True
-        else: return False
-
-    def addToBundle(self, bundleName):
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._addNodeToBundle,
-            "callbackKwargs":{"bundleName":bundleName},
-            })
-
-        return SceneQuery(data=returnData)
-
-    def removeFromBundle(self, bundleName):
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._removeNodeFromBundle,
-            "callbackKwargs":{"bundleName":bundleName},
-            })
-
-        return SceneQuery(data=returnData)
-
-    def _addNodeToBundle(self, node, **kwargs):
-        bundleName = kwargs.get("bundleName", None)
-        if not bundleName:
-            return None
-
-        bundle = hou.nodeBundle(bundleName)
-        if not bundle:
-            hou.hscript('opbadd "%s"' % bundleName)
-            bundle = hou.nodeBundle(bundleName)
-        if not bundle.containsNode(node):
-            bundle.addNode(node)
-
-    def _removeNodeFromBundle(self, node, **kwargs):
-        bundleName = kwargs.get("bundleName", None)
-        if not bundleName:
-            return None
-
-        bundle = hou.nodeBundle(bundleName)
-        if not bundle or not bundle.containsNode(node):
-            return None
-        bundle.removeNode(node)
 
     #################
     # NODE STATE
@@ -676,99 +604,26 @@ class _SceneQuery(object):
         return SceneQuery(data=[])
 
 
-    #################
-    # HELPERS
-    #################
+class MayaQuery(SQueryCommon):
+    def __init__(self, initValue=None, data=[], module=None):
+        SQueryCommon.__init__(self, data, initValue)
 
-    def _fnmatchHouObj(self, name, **kwargs):
-        pattern = kwargs.get("pattern", None)
-        if not pattern:
-            return None
+        # pc wouldn't get registered in this object
+        # even though it gets instantiated in sQueryCommon
+        # need to investigate
+        self.pc = pc 
+        self._data = data
+        self._module = module
+        print self._data
 
-        name = name.name()
-        result = fnmatch.fnmatch(name, pattern)
-        return result
+        if initValue:
+            self._init(initValue)
 
-    def _callAttr(self, **kwargs):
-        data = kwargs.get("data", None)
-        attr = kwargs.get("attr", None)
-        value = kwargs.get("value", None)
+    def _init(self, initValue):
+        #print "\nfunc _init"
 
-        returnData = []
-
-        if not data or not attr:
-            return returnData
-
-        for i in data:
-            if value != None:
-                result = getattr(i, attr)(value)
-                if result != None: returnData.append(result)
-            else:
-                result = getattr(i, attr)()
-                if result != None: returnData.append(result)
-
-        return returnData
-
-
-    def _filterData(self, **kwargs):
-        #print "\nfunc _filterData"
-
-        data = kwargs.get("data", None)
-        callback = kwargs.get("callback", None)
-        callbackKwargs = kwargs.get("callbackKwargs", {})
-        filterValue = kwargs.get("filterValue", None)
-        filterFunction = kwargs.get("filterFunction", None)
-        filterFunctionKwargs = kwargs.get("filterFunctionKwargs", {})
-
-        if not data:
-            return []
-
-        returnData = []
-
-        for i in data:
-            if callback:
-                result = callback(i, **callbackKwargs)
-            else:
-                result = i
-
-            if filterFunction and filterValue:
-                filterResult = filterFunction(i, **filterFunctionKwargs)
-                if filterResult == filterValue:
-                    if i:returnData.append(i)
-
-            elif not filterFunction and filterValue:
-                if result == filterValue:
-                    if i:returnData.append(i)
-
-            elif filterFunction and not filterValue: # this condition doesn't make sense actually
-                if i:returnData.append(i) 
-
-            else: # if not filter function action happening
-                if result:returnData.append(result)
-
-        return returnData
-
-    def _getAttrMultiple(self, node, **kwargs):
-        #print "\nfunc _getAttrMultiple"
-        
-        methods = kwargs.get("methods", None)
-
-        if not methods:
-            return None
-
-        lenMethods = len(methods)
-        for method in methods:
-            result = getattr(node, method)
-            if lenMethods != 1:
-                remainingMethods = methods[1:]
-                result = self._getAttrMultiple(result(), **{"methods":remainingMethods})
-                break
-            else:
-                return result()
-        return result
-
-
-
+        if initValue == "root":
+            self._data = self.pc.ls()
 
 
 
