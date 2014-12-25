@@ -2,8 +2,54 @@
 import hou
 import fnmatch
 
+def sQuery(initValue=None):
+    def _callQueryObject(env, initValue):
+        if env == "hou":
+            queryObject = HoudiniQuery(initValue=initValue)
+            return queryObject
+
+    env = None
+    try:
+        import hou
+        env = "hou"
+    except ImportError:
+        pass
+
+    try:
+        import nuke
+        env = "nuke"
+    except ImportError:
+        pass
+
+    queryObject = _callQueryObject(env, initValue)
+
+    return queryObject
+
+class SQueryCommon(object):
+    def __init__(self,data=[], initValue=None):
+        self._data = data
+        print self._data
+
+    def __str__(self):
+        for i in self._data:
+            print i
+
+    def printDataBeauty(self):
+        for i in self._data:
+            print "%s is included" %i
+
+class HoudiniQuery(SQueryCommon):
+    def __init__(self, data=[], initValue=None):
+        SQueryCommon.__init__(self, data, initValue)
+        self._data = data
+        print self._data
+
+    def printData(self):
+        for i in self._data:
+            print i
+
 class SceneQuery(object):
-    def __init__(self,data=[], context=None):
+    def __init__(self,data=[], initValue=None):
         self._data = data
         self._main(self._data)
         print self._data
@@ -32,14 +78,14 @@ class SceneQuery(object):
             env = "nuke"
         except ImportError:
             pass
-
         return env
 
     def _cleanupData(self):
         pass
 
-    def _initHoudini(self, context):
+    def _initHoudini(self, initValue):
         #print "\nfunc _initHoudini"
+        #! seems broken
 
         contexts = ["obj", "shop", "out"]
         if self._data in contexts:
