@@ -1,10 +1,11 @@
-########## houCommon v002 #################
-import hou
+########## SQuery #################
 import fnmatch
 
 def sQuery(initValue=None):
     def _callQueryObject(env, initValue):
         if env == "hou":
+            if not initValue:
+                initValue = "obj"
             queryObject = HoudiniQuery(initValue=initValue)
             return queryObject
 
@@ -26,70 +27,140 @@ def sQuery(initValue=None):
     return queryObject
 
 class SQueryCommon(object):
-    def __init__(self,data=[], initValue=None):
+    def __init__(self, initValue=None, data=[]):
         self._data = data
-        print self._data
 
     def __str__(self):
         for i in self._data:
             print i
 
-    def printDataBeauty(self):
-        for i in self._data:
-            print "%s is included" %i
+    def _getAttrMultiple(self, node, **kwargs):
+        #print "\nfunc _getAttrMultiple"
+        
+        methods = kwargs.get("methods", None)
+
+        if not methods:
+            return None
+
+        lenMethods = len(methods)
+        for method in methods:
+            result = getattr(node, method)
+            if lenMethods != 1:
+                remainingMethods = methods[1:]
+                result = self._getAttrMultiple(result(), **{"methods":remainingMethods})
+                break
+            else:
+                return result()
+        return result
+
+
+    def _filterData(self, **kwargs):
+        #print "\nfunc _filterData"
+
+        data = kwargs.get("data", None)
+        callback = kwargs.get("callback", None)
+        callbackKwargs = kwargs.get("callbackKwargs", {})
+        filterValue = kwargs.get("filterValue", None)
+        filterFunction = kwargs.get("filterFunction", None)
+        filterFunctionKwargs = kwargs.get("filterFunctionKwargs", {})
+
+        if not data:
+            return []
+
+        returnData = []
+
+        for i in data:
+            if callback:
+                result = callback(i, **callbackKwargs)
+            else:
+                result = i
+
+            if filterFunction and filterValue:
+                filterResult = filterFunction(i, **filterFunctionKwargs)
+                if filterResult == filterValue:
+                    if i:returnData.append(i)
+
+            elif not filterFunction and filterValue:
+                if result == filterValue:
+                    if i:returnData.append(i)
+
+            elif filterFunction and not filterValue: # this condition doesn't make sense actually
+                if i:returnData.append(i) 
+
+            else: # if not filter function action happening
+                if result:returnData.append(result)
+
+        return returnData
 
 class HoudiniQuery(SQueryCommon):
-    def __init__(self, data=[], initValue=None):
+    def __init__(self, initValue=None, data=[]):
         SQueryCommon.__init__(self, data, initValue)
         self._data = data
         print self._data
 
+        if initValue:
+            self._initHoudini(initValue)
+
     def printData(self):
         for i in self._data:
             print i
-
-class SceneQuery(object):
-    def __init__(self,data=[], initValue=None):
-        self._data = data
-        self._main(self._data)
-        print self._data
-
-    def __str__(self):
-        for i in self._data:
-            print i
-
-    def _main(self, data):
-        self._env = self._getEnv()
-        if self._env == "hou":
-            self._initHoudini(data)
-
-    def _getEnv(self):
-        #print "\nfunc _getEnv"
-
-        env = None
-        try:
-            import hou
-            env = "hou"
-        except ImportError:
-            pass
-
-        try:
-            import nuke
-            env = "nuke"
-        except ImportError:
-            pass
-        return env
-
-    def _cleanupData(self):
-        pass
 
     def _initHoudini(self, initValue):
         #print "\nfunc _initHoudini"
         #! seems broken
 
         contexts = ["obj", "shop", "out"]
-        if self._data in contexts:
-            self._data = [hou.node("/" + self._data)]
+        if initValue in contexts:
+            self._data = [hou.node("/" + initValue)]
+
+    def children(self):
+        #print "\nfunc children"
+
+        returnData = []
+        for data in self._data:
+            for child in data.children():
+                returnData.append(child)
+
+        return SceneQuery(data=returnData)
+
+    def selectByName(self, filterName):
+        #print "\nfunc selectByName"
+
+        if not filterName:
+            return None
+
+        filterFunction = None
+        filterFunctionKwargs = {}
+        filterValue = filterName
+
+        if filterName.find("*") != -1:
+            filterFunction = self._fnmatchHouObj
+            filterFunctionKwargs = {"pattern":filterName}
+            filterValue = True
+
+        returnData = self._filterData(**{
+            "data":self._data,
+            "callback":self._getAttrMultiple,
+            "callbackKwargs":{"methods":["name"]},
+            "filterValue":filterName,
+            "filterFunction":filterFunction,
+            "filterFunctionKwargs":filterFunctionKwargs,
+            "filterValue":filterValue
+            })
+
+        return SceneQuery(data=returnData)
+
+class SceneQuery(object):
+    def __init__(self,data=[], initValue=None):
+        self._data = data
+        print self._data
+
+    def __str__(self):
+        for i in self._data:
+            print i
+
+    def _cleanupData(self):
+        pass
 
     def selectByType(self, filterName):
         #print "\nfunc selectByType"
