@@ -106,12 +106,14 @@ class SQueryCommon(object):
 class MayaQuery(SQueryCommon):
     def __init__(self, initValue=None, data=[], module=None):
         SQueryCommon.__init__(self, data, initValue)
-        import pymel.core as pc
-        self.pc =  pc
+
+        # pc wouldn't get registered in this object
+        # even though it gets instantiated in sQueryCommon
+        # need to investigate
+        self.pc = pc 
         self._data = data
         self._module = module
         print self._data
-        print dir()
 
         if initValue:
             self._init(initValue)
@@ -120,18 +122,7 @@ class MayaQuery(SQueryCommon):
         #print "\nfunc _init"
 
         if initValue == "root":
-            print "aa"
             self._data = self.pc.ls()
-
-    def children(self):
-        #print "\nfunc children"
-
-        returnData = []
-        for data in self._data:
-            for child in data.children():
-                returnData.append(child)
-
-        return SceneQuery(data=returnData)
 
 class HoudiniQuery(SQueryCommon):
     def __init__(self, initValue=None, data=[]):
