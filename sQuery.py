@@ -45,6 +45,26 @@ class SQueryCommon(object):
         for i in self._data:
             print i
 
+    def _callAttr(self, **kwargs):
+        data = kwargs.get("data", None)
+        attr = kwargs.get("attr", None)
+        value = kwargs.get("value", None)
+
+        returnData = []
+
+        if not data or not attr:
+            return returnData
+
+        for i in data:
+            if value != None:
+                result = getattr(i, attr)(value)
+                if result != None: returnData.append(result)
+            else:
+                result = getattr(i, attr)()
+                if result != None: returnData.append(result)
+
+        return returnData
+
     def _getAttrMultiple(self, node, **kwargs):
         #print "\nfunc _getAttrMultiple"
         
@@ -67,7 +87,6 @@ class SQueryCommon(object):
 
     def _filterData(self, **kwargs):
         #print "\nfunc _filterData"
-
         data = kwargs.get("data", None)
         callback = kwargs.get("callback", None)
         callbackKwargs = kwargs.get("callbackKwargs", {})
@@ -76,32 +95,41 @@ class SQueryCommon(object):
         filterFunctionKwargs = kwargs.get("filterFunctionKwargs", {})
 
         if not data:
-            return []
+            return None
 
-        returnData = []
+        if callback:
+            result = callback(data, **callbackKwargs)
+        else:
+            result = data
 
-        for i in data:
-            if callback:
-                result = callback(i, **callbackKwargs)
-            else:
-                result = i
+        if filterFunction and filterValue:
+            filterResult = filterFunction(data, **filterFunctionKwargs)
+            if filterResult == filterValue:
+                if data:return data
 
-            if filterFunction and filterValue:
-                filterResult = filterFunction(i, **filterFunctionKwargs)
-                if filterResult == filterValue:
-                    if i:returnData.append(i)
+        elif not filterFunction and filterValue:
+            if result == filterValue:
+                if data:return data
 
-            elif not filterFunction and filterValue:
-                if result == filterValue:
-                    if i:returnData.append(i)
+        elif filterFunction and not filterValue: # this condition doesn't make sense actually
+            if data:return data
 
-            elif filterFunction and not filterValue: # this condition doesn't make sense actually
-                if i:returnData.append(i) 
+        else: # if not filter function action happening
+            if result:return result
 
-            else: # if not filter function action happening
-                if result:returnData.append(result)
+    def _fnMatch(self, name, **kwargs):
+        pattern = kwargs.get("pattern", None)
+        callback = kwargs.get("callback", None)
+        callbackKwargs = kwargs.get("callbackKwargs", {})
 
-        return returnData
+        if not pattern:
+            return None
+
+        if callback:
+            name = callback(name, **callbackKwargs)
+
+        result = fnmatch.fnmatch(name, pattern)
+        return result
 
 class MayaQuery(SQueryCommon):
     def __init__(self, initValue=None, data=[], module=None):
@@ -140,44 +168,61 @@ class HoudiniQuery(SQueryCommon):
         if initValue in contexts:
             self._data = [hou.node("/" + initValue)]
 
-    def children(self):
+    def children(self, filterData=None):
         #print "\nfunc children"
+        """
+        Get the children of each element in the set of matched elements, optionally filtered by a selector.
+        """
 
         returnData = []
-        for data in self._data:
-            for child in data.children():
-                returnData.append(child)
 
-        return SceneQuery(data=returnData)
-
-    def selectByName(self, filterName):
-        #print "\nfunc selectByName"
-
-        if not filterName:
-            return None
-
+        filterMethods = None
+        filterName = ""
         filterFunction = None
         filterFunctionKwargs = {}
-        filterValue = filterName
+        callback = None
+        callbackKwargs = None
+
+        if filterData:
+            if filterData.get("type", None):
+                filterKind = "type"
+                filterMethods = ["type", "name"]
+            elif filterData.get("name", None):
+                filterKind = "name"
+                filterMethods = ["name"]
+            else:
+                filterKind = None
+                filterMethods = None
+
+            if filterKind:
+                filterName = filterData[filterKind]
+                callback = self._getAttrMultiple
+                callbackKwargs = {"methods":filterMethods}
 
         if filterName.find("*") != -1:
-            filterFunction = self._fnmatchHouObj
-            filterFunctionKwargs = {"pattern":filterName}
+            filterFunction = self._fnMatch
+            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttrMultiple, "callbackKwargs":{"methods":filterMethods}}
             filterValue = True
+        else:
+            filterValue = filterName
 
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._getAttrMultiple,
-            "callbackKwargs":{"methods":["name"]},
-            "filterValue":filterName,
-            "filterFunction":filterFunction,
-            "filterFunctionKwargs":filterFunctionKwargs,
-            "filterValue":filterValue
-            })
+        for data in self._data:
+            for child in data.children():
+                filteredData = self._filterData(**{
+                    "data":child,
+                    "callback":callback,
+                    "callbackKwargs":callbackKwargs,
+                    "filterValue":filterName,
+                    "filterFunction":filterFunction,
+                    "filterFunctionKwargs":filterFunctionKwargs,
+                    "filterValue":filterValue
+                })
+                if filteredData:
+                    returnData.append(filteredData)
 
-        return SceneQuery(data=returnData)
+        return HoudiniQuery(data=returnData)
 
-class SceneQuery(object):
+class _SceneQuery(object):
     def __init__(self,data=[], initValue=None):
         self._data = data
         print self._data
