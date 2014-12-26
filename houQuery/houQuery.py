@@ -27,6 +27,29 @@ class HouQuery(SQueryCommon):
         if initValue in contexts:
             self._data = [hou.node("/" + initValue)]
 
+    def _parseAttributeFilterData(self, filterData=None):
+        if not filterData:
+            return None
+
+        if not filterData.startswith("[") and not filterData.endswith("]"):
+            return None
+
+        if filterData.count("=") > 1:
+            print "This object doesn't handle parameter expressions that has more than 1 ="
+            return None
+
+        if filterData.find("=") == -1:
+            "this is the condition where you would be filtering for nodes that has a specific parm"
+            pass
+
+        filterDataContent = filterData[1:-1]
+        eqSignLoc = filterDataContent.find("=")
+        filterParmName = filterDataContent[:eqSignLoc]
+        filterParmValue = filterDataContent[eqSignLoc+1:]
+
+        print filterParmName
+        print filterParmValue
+
     def _generateFilterOptions(self, filterData=None):
         """
         Generates the options that are going to be required by filtering operations based on given data
@@ -38,6 +61,7 @@ class HouQuery(SQueryCommon):
         filterFunctionKwargs = {}
         callback = None
         callbackKwargs = None
+        filterKind = None
 
         if filterData:
             if isinstance(filterData, dict):
@@ -57,6 +81,9 @@ class HouQuery(SQueryCommon):
                 elif filterData.startswith("n#"):
                     filterKind = "name"
                     filterName = filterData[2:]
+                else:
+                    filterKind = "attr"
+                    self._parseAttributeFilterData(filterData)
 
             if filterKind:
                 callback = self._getAttrMultiple
