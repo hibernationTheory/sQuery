@@ -26,13 +26,10 @@ class HouQuery(SQueryCommon):
         if initValue in contexts:
             self._data = [hou.node("/" + initValue)]
 
-    def children(self, filterData=None):
-        #print "\nfunc children"
+    def _generateFilterOptions(self, filterData=None):
         """
-        Get the children of each element in the set of matched elements, optionally filtered by a selector.
+        Generates the options that are going to be required by filtering operations based on given data
         """
-
-        returnData = []
 
         filterMethods = None
         filterName = ""
@@ -42,20 +39,31 @@ class HouQuery(SQueryCommon):
         callbackKwargs = None
 
         if filterData:
-            if filterData.get("type", None):
-                filterKind = "type"
-                filterMethods = ["type", "name"]
-            elif filterData.get("name", None):
-                filterKind = "name"
-                filterMethods = ["name"]
-            else:
-                filterKind = None
-                filterMethods = None
+            if isinstance(filterData, dict):
+                if filterData.get("type", None):
+                    filterKind = "type"
+                    filterName = filterData[filterKind]
+                elif filterData.get("name", None):
+                    filterKind = "name"
+                    filterName = filterData[filterKind]
+                else:
+                    filterKind = None
+                    filterMethods = None
+            elif isinstance(filterData, str):
+                if filterData.startswith("t#"):
+                    filterKind = "type"
+                    filterName = filterData[2:]
+                elif filterData.startswith("n#"):
+                    filterKind = "name"
+                    filterName = filterData[2:]
 
             if filterKind:
-                filterName = filterData[filterKind]
                 callback = self._getAttrMultiple
                 callbackKwargs = {"methods":filterMethods}
+                if filterKind == "type":
+                    filterMethods = ["type", "name"]
+                elif filterKind == "name":
+                    filterMethods = ["name"]
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch
@@ -64,19 +72,53 @@ class HouQuery(SQueryCommon):
         else:
             filterValue = filterName
 
+        filterReturnData = {
+            "filterMethods":filterMethods,
+            "filterName":filterName,
+            "filterFunction":filterFunction,
+            "filterFunctionKwargs":filterFunctionKwargs,
+            "callback":callback,
+            "callbackKwargs":callbackKwargs,
+            "filterValue":filterValue,
+        }
+
+        return filterReturnData
+
+
+    def children(self, filterData=None):
+        #print "\nfunc children"
+        """
+        Get the children of each element in the set of matched elements, optionally filtered by a selector.
+        """
+
+        returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+
         for data in self._data:
             for child in data.children():
-                filteredData = self._filterData(**{
-                    "data":child,
-                    "callback":callback,
-                    "callbackKwargs":callbackKwargs,
-                    "filterValue":filterName,
-                    "filterFunction":filterFunction,
-                    "filterFunctionKwargs":filterFunctionKwargs,
-                    "filterValue":filterValue
-                })
+                filterOptions["data"] = child
+                filteredData = self._filterData(**filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
+
+        return HouQuery(data=returnData)
+
+    def filter(self, filterData=None):
+        """
+        Reduce the set of matched elements to those that match the selector or pass the function's test.
+        """
+        pass
+
+        returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._data:
+            filterOptions["data"] = data
+            filteredData = self._filterData(**filterOptions)
+            if filteredData:
+                returnData.append(filteredData)
 
         return HouQuery(data=returnData)
 
@@ -238,12 +280,6 @@ class HouQuery(SQueryCommon):
     def empty(self):
         """
         Remove all child nodes of the set of matched elements from the DOM.
-        """
-        pass
-
-    def filter(self):
-        """!
-        Reduce the set of matched elements to those that match the selector or pass the function's test.
         """
         pass
 

@@ -15,12 +15,14 @@ def sQuery(initValue=None):
             if not initValue:
                 initValue = "obj"
             from houQuery import houQuery as hq
+            reload(hq)
             queryObject = hq.HouQuery(initValue=initValue)
             return queryObject
         if env == "maya":
             if not initValue:
                 initValue = "root"
             from mayaQuery import mayaQuery as mq
+            reload(mq)
             queryObject = mq.MayaQuery(initValue=initValue)
             return queryObject
 
