@@ -14,6 +14,7 @@ class HouQuery(SQueryCommon):
     def __init__(self, initValue=None, data=[], prevData = []):
         SQueryCommon.__init__(self, data, initValue)
         self._data = data
+        self._prevData = prevData
         print self._data
 
         if initValue:
@@ -84,6 +85,26 @@ class HouQuery(SQueryCommon):
 
         return filterReturnData
 
+    def addBack(self, filterData=None):
+        """
+        Add the previous set of elements on the stack to the current set, optionally filtered by a selector.
+        """
+
+        returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._prevData:
+            filterOptions["data"] = data
+            filteredData = self._filterData(**filterOptions)
+            if filteredData:
+                if filteredData not in self._data:
+                    returnData.append(filteredData)
+
+        combinedData = self._data + returnData
+
+        return HouQuery(data=combinedData, prevData=self._data)
+        
 
     def children(self, filterData=None):
         #print "\nfunc children"
@@ -102,7 +123,7 @@ class HouQuery(SQueryCommon):
                 if filteredData:
                     returnData.append(filteredData)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
     def filter(self, filterData=None):
         """
@@ -120,7 +141,7 @@ class HouQuery(SQueryCommon):
             if filteredData:
                 returnData.append(filteredData)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
 
     #################
@@ -135,7 +156,7 @@ class HouQuery(SQueryCommon):
             if value == targetValue:
                 returnData.append(i)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
     def parmContains(self, targetValue):
         #print "\nfunc parmContains"
@@ -146,7 +167,7 @@ class HouQuery(SQueryCommon):
                 if value.find(targetValue) != -1:
                     returnData.append(i)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
     #################
     # PARM STUFF
@@ -247,11 +268,7 @@ class HouQuery(SQueryCommon):
         """
         pass
 
-    def addBack(self):
-        """
-        Add the previous set of elements on the stack to the current set, optionally filtered by a selector.
-        """
-        pass
+
 
     def addAttr(self):
         """
