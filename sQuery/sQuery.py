@@ -1,3 +1,11 @@
+import os
+import sys
+
+CURRENT_DIR = os.path.dirname(__file__)
+PARENT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, os.pardir))
+sys.path.insert(0, PARENT_DIR)
+
+
 def sQuery(initValue=None):
     """
     Entry point for sQuery library, creates a suitable Query Object depending on the working environment (application)
@@ -13,7 +21,7 @@ def sQuery(initValue=None):
             if not initValue:
                 initValue = "root"
             from mayaQuery import mayaQuery as mq
-            queryObject = mq.MayaQuery(initValue=initValue, module = None)
+            queryObject = mq.MayaQuery(initValue=initValue)
             return queryObject
 
     env = None
