@@ -8,6 +8,7 @@ PARENT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, os.pardir))
 sys.path.insert(0, PARENT_DIR)
 
 from sQueryCommon import sQueryCommon as sq
+reload(sq)
 SQueryCommon = sq.SQueryCommon
 
 class HouQuery(SQueryCommon):
@@ -35,7 +36,7 @@ class HouQuery(SQueryCommon):
             return None
 
         if filterData.count("=") > 1:
-            print "This object doesn't handle parameter expressions that has more than 1 ="
+            print "This object doesn't handle parameter expressions that has more than 1 '='"
             return None
 
         if filterData.find("=") == -1:
@@ -47,8 +48,7 @@ class HouQuery(SQueryCommon):
         filterParmName = filterDataContent[:eqSignLoc]
         filterParmValue = filterDataContent[eqSignLoc+1:]
 
-        print filterParmName
-        print filterParmValue
+        return {"filterParmName":filterParmName, "filterParmValue":filterParmValue}
 
     def _generateFilterOptions(self, filterData=None):
         """
@@ -62,43 +62,55 @@ class HouQuery(SQueryCommon):
         callback = None
         callbackKwargs = None
         filterKind = None
+        filterValue = None
 
         if filterData:
             if isinstance(filterData, dict):
                 if filterData.get("type", None):
                     filterKind = "type"
                     filterName = filterData[filterKind]
+                    filterValue = filterName
                 elif filterData.get("name", None):
                     filterKind = "name"
                     filterName = filterData[filterKind]
+                    filterValue = filterName
                 else:
                     filterKind = None
                     filterMethods = None
+                    filterValue = filterName
             elif isinstance(filterData, str):
                 if filterData.startswith("t#"):
                     filterKind = "type"
                     filterName = filterData[2:]
+                    filterValue = filterName
                 elif filterData.startswith("n#"):
                     filterKind = "name"
                     filterName = filterData[2:]
+                    filterValue = filterName
                 else:
                     filterKind = "attr"
-                    self._parseAttributeFilterData(filterData)
+                    attrFilterData = self._parseAttributeFilterData(filterData)
+                    filterName = attrFilterData.get("filterParmName")
+                    filterValue = attrFilterData.get("filterParmValue")
 
             if filterKind:
-                callback = self._getAttrMultiple
-                callbackKwargs = {"methods":filterMethods}
                 if filterKind == "type":
+                    callback = self._getAttrMultiple
+                    callbackKwargs = {"methods":filterMethods}
                     filterMethods = ["type", "name"]
                 elif filterKind == "name":
+                    callback = self._getAttrMultiple
+                    callbackKwargs = {"methods":filterMethods}
                     filterMethods = ["name"]
+                elif filterKind == "attr":
+                    filterFunction = self._callAttr
+                    filterFunctionKwargs = {"attr":"parm", "value":filterName}
+                    filterValue = None
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch
             filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttrMultiple, "callbackKwargs":{"methods":filterMethods}}
             filterValue = True
-        else:
-            filterValue = filterName
 
         filterReturnData = {
             "filterMethods":filterMethods,
@@ -122,8 +134,7 @@ class HouQuery(SQueryCommon):
         filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._prevData:
-            filterOptions["data"] = data
-            filteredData = self._filterData(**filterOptions)
+            filteredData = self._filterData(data, **filterOptions)
             if filteredData:
                 if filteredData not in self._data:
                     returnData.append(filteredData)
@@ -142,11 +153,11 @@ class HouQuery(SQueryCommon):
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
+        print filterOptions
 
         for data in self._data:
             for child in data.children():
-                filterOptions["data"] = child
-                filteredData = self._filterData(**filterOptions)
+                filteredData = self._filterData(child, **filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
 
@@ -163,8 +174,7 @@ class HouQuery(SQueryCommon):
         filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._data:
-            filterOptions["data"] = data
-            filteredData = self._filterData(**filterOptions)
+            filteredData = self._filterData(data, **filterOptions)
             if filteredData:
                 returnData.append(filteredData)
 
@@ -238,7 +248,7 @@ class HouQuery(SQueryCommon):
     # BUNDLE STUFF
     #################
 
-    def checkBundle(self, value):
+    def _checkBundle(self, value):
         """given the string value, checks if a bundle exists with the name"""
         bundles = hou.nodeBundles()
         bundleNames = [bundle.name() for bundle in bundles]
@@ -249,8 +259,7 @@ class HouQuery(SQueryCommon):
 
     def addToBundle(self, bundleName):
         for data in self._data:
-            filteredData = self._filterData(**{
-                "data":data,
+            filteredData = self._filterData(data, **{
                 "callback":self._addNodeToBundle,
                 "callbackKwargs":{"bundleName":bundleName},
                 })
@@ -259,8 +268,7 @@ class HouQuery(SQueryCommon):
 
     def removeFromBundle(self, bundleName):
         for data in self._data:
-            filteredData = self._filterData(**{
-                "data":self._data,
+            filteredData = self._filterData(data, **{
                 "callback":self._removeNodeFromBundle,
                 "callbackKwargs":{"bundleName":bundleName},
                 })
@@ -294,8 +302,6 @@ class HouQuery(SQueryCommon):
         Create a new jQuery object with elements added to the set of matched elements.
         """
         pass
-
-
 
     def addAttr(self):
         """

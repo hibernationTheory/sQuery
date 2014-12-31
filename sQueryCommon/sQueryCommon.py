@@ -8,14 +8,13 @@ class SQueryCommon(object):
         for i in self._data:
             print i
 
-    def _callAttr(self, **kwargs):
-        data = kwargs.get("data", None)
+    def _callAttr(self, data,**kwargs):
         attr = kwargs.get("attr", None)
         value = kwargs.get("value", None)
 
         returnData = None
 
-        if not data or not attr:
+        if not attr:
             return None
 
         if value != None:
@@ -35,8 +34,7 @@ class SQueryCommon(object):
 
         for i in data:
             newKwargs = kwargs.copy()
-            newKwargs["data"] = i
-            self._callAttr(**newKwargs)
+            self._callAttr(i, **newKwargs)
 
     def _getAttrMultiple(self, node, **kwargs):
         #print "\nfunc _getAttrMultiple"
@@ -58,17 +56,13 @@ class SQueryCommon(object):
         return result
 
 
-    def _filterData(self, **kwargs):
+    def _filterData(self, data, **kwargs):
         #print "\nfunc _filterData"
-        data = kwargs.get("data", None)
         callback = kwargs.get("callback", None)
         callbackKwargs = kwargs.get("callbackKwargs", {})
         filterValue = kwargs.get("filterValue", None)
         filterFunction = kwargs.get("filterFunction", None)
         filterFunctionKwargs = kwargs.get("filterFunctionKwargs", {})
-
-        if not data:
-            return None
 
         if callback:
             result = callback(data, **callbackKwargs)
@@ -84,10 +78,11 @@ class SQueryCommon(object):
             if result == filterValue:
                 if data:return data
 
-        elif filterFunction and not filterValue: # this condition doesn't make sense actually
-            if data:return data
+        elif filterFunction and not filterValue: #!?
+            filterResult = filterFunction(data, **filterFunctionKwargs)
+            if filterResult:return data
 
-        else: # if not filter function action happening
+        else: # if no filter function action happening
             if result:return result
 
     def _fnMatch(self, name, **kwargs):
