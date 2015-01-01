@@ -38,8 +38,10 @@ class SQueryCommon(object):
 
     def _getAttrMultiple(self, node, **kwargs):
         #print "\nfunc _getAttrMultiple"
+        #__call__
         
         methods = kwargs.get("methods", None)
+        value = kwargs.get("value", None)
 
         if not methods:
             return None
@@ -52,7 +54,11 @@ class SQueryCommon(object):
                 result = self._getAttrMultiple(result(), **{"methods":remainingMethods})
                 break
             else:
-                return result()
+                if value:
+                    return result(value)
+                else:
+                    return result()
+
         return result
 
 

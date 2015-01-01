@@ -39,14 +39,14 @@ class HouQuery(SQueryCommon):
             print "This object doesn't handle parameter expressions that has more than 1 '='"
             return None
 
-        if filterData.find("=") == -1:
-            "this is the condition where you would be filtering for nodes that has a specific parm"
-            pass
-
         filterDataContent = filterData[1:-1]
         eqSignLoc = filterDataContent.find("=")
-        filterParmName = filterDataContent[:eqSignLoc]
-        filterParmValue = filterDataContent[eqSignLoc+1:]
+        if eqSignLoc == -1:
+            filterParmName = filterDataContent
+            filterParmValue = None
+        else:
+            filterParmName = filterDataContent[:eqSignLoc]
+            filterParmValue = filterDataContent[eqSignLoc+1:]
 
         return {"filterParmName":filterParmName, "filterParmValue":filterParmValue}
 
@@ -55,7 +55,7 @@ class HouQuery(SQueryCommon):
         Generates the options that are going to be required by filtering operations based on given data
         """
 
-        filterMethods = None
+        callbackKwargsValue = None
         filterName = ""
         filterFunction = None
         filterFunctionKwargs = {}
@@ -76,7 +76,7 @@ class HouQuery(SQueryCommon):
                     filterValue = filterName
                 else:
                     filterKind = None
-                    filterMethods = None
+                    callbackKwargsValue = None
                     filterValue = filterName
             elif isinstance(filterData, str):
                 if filterData.startswith("t#"):
@@ -87,7 +87,7 @@ class HouQuery(SQueryCommon):
                     filterKind = "name"
                     filterName = filterData[2:]
                     filterValue = filterName
-                else:
+                elif filterData.startswith("[") and filterData.endswith("]"):
                     filterKind = "attr"
                     attrFilterData = self._parseAttributeFilterData(filterData)
                     filterName = attrFilterData.get("filterParmName")
@@ -95,25 +95,23 @@ class HouQuery(SQueryCommon):
 
             if filterKind:
                 if filterKind == "type":
+                    callbackKwargsValue = ["type", "name"]
                     callback = self._getAttrMultiple
-                    callbackKwargs = {"methods":filterMethods}
-                    filterMethods = ["type", "name"]
+                    callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "name":
+                    callbackKwargsValue = ["name"]
                     callback = self._getAttrMultiple
-                    callbackKwargs = {"methods":filterMethods}
-                    filterMethods = ["name"]
+                    callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "attr":
-                    filterFunction = self._callAttr
-                    filterFunctionKwargs = {"attr":"parm", "value":filterName}
-                    filterValue = None
+                    filterFunction = self._getAttrMultiple
+                    filterFunctionKwargs = {"methods":["parm"], "value":filterName}
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch
-            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttrMultiple, "callbackKwargs":{"methods":filterMethods}}
+            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttrMultiple, "callbackKwargs":{"methods":callbackKwargsValue}}
             filterValue = True
 
         filterReturnData = {
-            "filterMethods":filterMethods,
             "filterName":filterName,
             "filterFunction":filterFunction,
             "filterFunctionKwargs":filterFunctionKwargs,
