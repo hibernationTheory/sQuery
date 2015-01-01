@@ -45,3 +45,5 @@ Temporary Items
 #Removing the SConstruct
 SConstruct
 *.pyc
+*.hip
+*.hipnc

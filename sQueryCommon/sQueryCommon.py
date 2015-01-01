@@ -1,5 +1,14 @@
 import fnmatch
 
+def methodName(fn):
+    def inner(*args, **kwargs):
+        """
+        feeds the name of the method as an argument to the method itself
+        """
+        kwargs["methodName"] = fn.func_name
+        fn(*args, **kwargs)
+    return inner
+
 class SQueryCommon(object):
     def __init__(self, initValue=None, data=[]):
         self._data = data
@@ -8,37 +17,24 @@ class SQueryCommon(object):
         for i in self._data:
             print i
 
-    def _callAttr(self, data,**kwargs):
-        attr = kwargs.get("attr", None)
-        value = kwargs.get("value", None)
-
-        returnData = None
-
-        if not attr:
-            return None
-
-        if value != None:
-            result = getattr(data, attr)(value)
-            if result != None: return result
-        else:
-            result = getattr(data, attr)()
-            if result != None: return result
-
-        return returnData
-
-    def _callAttrOnMultiple(self, **kwargs):
-        data = kwargs.get("data", None)
+    def _getAttrMultiple(self, data, **kwargs):
+        """
+        runs the _getAttr method on a given set of data
+        """
         returnData = []
         if not data:
             return returnData
 
         for i in data:
-            newKwargs = kwargs.copy()
-            self._callAttr(i, **newKwargs)
+            result = self._getAttr(i, **kwargs)
+            if result:
+                returnData.append(result)
+        return returnData
 
-    def _getAttrMultiple(self, node, **kwargs):
-        #print "\nfunc _getAttrMultiple"
-        #__call__
+    def _getAttr(self, node, **kwargs):
+        """
+        makes calls to the given list of attributes on an object
+        """
         
         methods = kwargs.get("methods", None)
 
@@ -58,9 +54,9 @@ class SQueryCommon(object):
             if lenMethods != 1:
                 remainingMethods = methods[1:]
                 if type == "tuple":
-                    result = self._getAttrMultiple(result(method[1]), **{"methods":remainingMethods})
+                    result = self._getAttr(result(method[1]), **{"methods":remainingMethods})
                 else:
-                    result = self._getAttrMultiple(result(), **{"methods":remainingMethods})
+                    result = self._getAttr(result(), **{"methods":remainingMethods})
                 if not result:
                     return None
                 break
@@ -71,7 +67,6 @@ class SQueryCommon(object):
                     return result()
 
         return result
-
 
     def _filterData(self, data, **kwargs):
         #print "\nfunc _filterData"

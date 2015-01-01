@@ -96,32 +96,35 @@ class HouQuery(SQueryCommon):
                     filterValue = filterName
                 elif filterData.startswith("[") and filterData.endswith("]"):
                     filterKind = self._parseAttributeFilterSyntax(filterData)
-
                     attrFilterData = self._parseAttributeFilterData(filterData)
                     filterName = attrFilterData.get("filterParmName")
                     filterValue = attrFilterData.get("filterParmValue")
+                else: # will be considered a plain name
+                    filterKind = "name"
+                    filterName = filterData
+                    filterValue = filterName
 
             if filterKind:
                 if filterKind == "type":
                     callbackKwargsValue = ["type", "name"]
-                    callback = self._getAttrMultiple
+                    callback = self._getAttr
                     callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "name":
                     callbackKwargsValue = ["name"]
-                    callback = self._getAttrMultiple
+                    callback = self._getAttr
                     callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "attr":
                     callbackKwargsValue = [("parm", "scale")]
-                    filterFunction = self._getAttrMultiple
+                    filterFunction = self._getAttr
                     filterFunctionKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "attrValue":
                     callbackKwargsValue = [("parm", filterName), "evalAsString"]
-                    callback = self._getAttrMultiple
+                    callback = self._getAttr
                     callbackKwargs = {"methods":callbackKwargsValue}
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch
-            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttrMultiple, "callbackKwargs":{"methods":callbackKwargsValue}}
+            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttr, "callbackKwargs":{"methods":callbackKwargsValue}}
             filterValue = True
 
         filterReturnData = {
@@ -222,14 +225,13 @@ class HouQuery(SQueryCommon):
     #################
 
     def setAttr(self, parmName, parmValue):
-        for i in self._data:
-            self._getAttrMultiple(i, **{"methods":
+        self._getAttrMultiple(self._data, **{"methods":
                 [("parm", parmName), ("set", parmValue)]})
         return HouQuery(data=self._data)
 
     def replaceAttrValue(self, parmName, parmValue, parmTargetValue):
         for i in self._data:
-            parmObject = self._getAttrMultiple(i, **{"methods":
+            parmObject = self._getAttr(i, **{"methods":
                 [("parm", parmName)]})
             parmObjectValue = parmObject.eval()
             if isinstance(parmObjectValue, str):
@@ -291,6 +293,44 @@ class HouQuery(SQueryCommon):
         if not bundle or not bundle.containsNode(node):
             return None
         bundle.removeNode(node)
+
+    #################
+    # NODE STATE
+    #################
+
+    def _callAttr(self, **kwargs):
+        self._getAttrMultiple(self._data, **{"methods":
+                [kwargs["methodName"]]})
+        return HouQuery(data=self._data)
+
+    def _callAttrSingleValue(self, *args, **kwargs):
+        self._getAttrMultiple(self._data, **{"methods":
+                [(kwargs["methodName"], args[0])]})
+        return HouQuery(data=self._data)
+
+    @sq.methodName
+    def setDisplayFlag(self, *args, **kwargs):
+        return self._callAttrSingleValue(*args, **kwargs)
+
+    @sq.methodName
+    def setRenderFlag(self, *args, **kwargs):
+        return self._callAttrSingleValue(*args, **kwargs)
+
+    @sq.methodName
+    def setSelected(self, *args, **kwargs):
+        return self._callAttrSingleValue(*args, **kwargs)
+
+    @sq.methodName
+    def setUserData(self, *args, **kwargs):
+        return self._callAttrSingleValue(*args, **kwargs)
+
+    @sq.methodName
+    def destroy(self, **kwargs):
+        self._callAttr(**kwargs)
+
+    ################################
+    # Below are from the jQuery API
+    ################################
 
     def add(self):
         """
@@ -385,52 +425,8 @@ class HouQuery(SQueryCommon):
         pass
 
 """
-class _SceneQuery(object):
-    def __init__(self,data=[], initValue=None):
-        self._data = data
-        print self._data
 
-    def __str__(self):
-        for i in self._data:
-            print i
 
-    def _cleanupData(self):
-        pass
-
-    #################
-    # NODE STATE
-    #################
-
-    def layoutChildren(self):
-        self._callAttr(**{
-            "data":self._data,
-             "attr":"layoutChildren",
-            })
-        return SceneQuery(data=self._data)
-
-    def setDisplayFlag(self, value):
-        self._callAttr(**{
-            "data":self._data,
-             "attr":"setDisplayFlag",
-             "value":value
-            })
-        return SceneQuery(data=self._data)
-
-    def setRenderFlag(self, value):
-        self._callAttr(**{
-            "data":self._data,
-             "attr":"setRenderFlag",
-             "value":value
-            })
-        return SceneQuery(data=self._data)
-
-    def setSelected(self, value):
-        self._callAttr(**{
-            "data":self._data,
-             "attr":"setSelected",
-             "value":value
-            })
-        return SceneQuery(data=self._data)
 
     #################
     # NODE CREATION / DELETION
@@ -546,11 +542,4 @@ class _SceneQuery(object):
             parent.layoutChildren()
 
         return False
-
-    def destroy(self):
-        self._callAttr(**{
-            "data":self._data,
-            "attr":"destroy"
-            })
-        return SceneQuery(data=[])
 """
