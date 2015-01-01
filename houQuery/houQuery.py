@@ -62,7 +62,6 @@ class HouQuery(SQueryCommon):
         Generates the options that are going to be required by filtering operations based on given data
         """
 
-        callbackKwargsValue = None
         filterName = ""
         filterFunction = None
         filterFunctionKwargs = {}
@@ -80,10 +79,6 @@ class HouQuery(SQueryCommon):
                 elif filterData.get("name", None):
                     filterKind = "name"
                     filterName = filterData[filterKind]
-                    filterValue = filterName
-                else:
-                    filterKind = None
-                    callbackKwargsValue = None
                     filterValue = filterName
             elif isinstance(filterData, str):
                 if filterData.startswith("t#"):
@@ -106,25 +101,22 @@ class HouQuery(SQueryCommon):
 
             if filterKind:
                 if filterKind == "type":
-                    callbackKwargsValue = ["type", "name"]
+                    callbackKwargs = {"methods":["type", "name"]}
                     callback = self._getAttr
-                    callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "name":
-                    callbackKwargsValue = ["name"]
+                    callbackKwargs = {"methods":["name"]}
                     callback = self._getAttr
-                    callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "attr":
-                    callbackKwargsValue = [("parm", "scale")]
+                    callbackKwargs = {"methods":[{"name":"parm", "args":filterName}]}
                     filterFunction = self._getAttr
-                    filterFunctionKwargs = {"methods":callbackKwargsValue}
+                    filterFunctionKwargs = callbackKwargs
                 elif filterKind == "attrValue":
-                    callbackKwargsValue = [("parm", filterName), "evalAsString"]
+                    callbackKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}]}
                     callback = self._getAttr
-                    callbackKwargs = {"methods":callbackKwargsValue}
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch
-            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttr, "callbackKwargs":{"methods":callbackKwargsValue}}
+            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttr, "callbackKwargs":callbackKwargs}
             filterValue = True
 
         filterReturnData = {
@@ -236,7 +228,6 @@ class HouQuery(SQueryCommon):
             parmObject = self._getAttr(i, **{"methods":[
                 {"name":"parm", "args":parmName}
                 ]})
-            print parmObject
             parmObjectValue = parmObject.eval()
             if isinstance(parmObjectValue, str):
                 newValue = parmObjectValue.replace(parmValue, parmTargetValue)
@@ -302,12 +293,7 @@ class HouQuery(SQueryCommon):
     # NODE STATE
     #################
 
-    def _callAttr(self, **kwargs):
-        self._getAttrMultiple(self._data, **{"methods":
-                [kwargs["methodName"]]})
-        return HouQuery(data=self._data)
-
-    def _callAttrSingleValue(self, *args, **kwargs):
+    def _callAttrWithMethodName(self, *args, **kwargs):
         # deleting the _sQueryMethodName that comes from the decorator
         # to have it not passed to underlying Hou objects
         methodName = kwargs.get("_sQueryMethodName")
@@ -318,84 +304,94 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=self._data)
 
     @sq.methodName
+    def setName(self, *args, **kwargs):
+        return self._callAttrWithMethodName(*args, **kwargs)
+
+    @sq.methodName
     def setDisplayFlag(self, *args, **kwargs):
-        return self._callAttrSingleValue(*args, **kwargs)
+        return self._callAttrWithMethodName(*args, **kwargs)
 
     @sq.methodName
     def setRenderFlag(self, *args, **kwargs):
-        return self._callAttrSingleValue(*args, **kwargs)
+        return self._callAttrWithMethodName(*args, **kwargs)
 
     @sq.methodName
     def setSelected(self, *args, **kwargs):
-        return self._callAttrSingleValue(*args, **kwargs)
+        return self._callAttrWithMethodName(*args, **kwargs)
 
     @sq.methodName
     def setUserData(self, *args, **kwargs):
-        return self._callAttrSingleValue(*args, **kwargs)
+        return self._callAttrWithMethodName(*args, **kwargs)
+
+    @sq.methodName
+    def destroyUserData(self, *args, **kwargs):
+        return self._callAttrWithMethodName(*args, **kwargs)
 
     @sq.methodName
     def destroy(self, *args, **kwargs):
-        self._callAttrSingleValue(*args, **kwargs)
+        self._callAttrWithMethodName(*args, **kwargs)
+        return HouQuery(data=None)
+
 
     ################################
     # Below are from the jQuery API
     ################################
 
-    def add(self):
+    def _add(self):
         """
         Create a new jQuery object with elements added to the set of matched elements.
         """
         pass
 
-    def addAttr(self):
+    def _addAttr(self):
         """
         Adds the specified class(es) to each of the set of matched elements.
         """
         pass
 
-    def after(self):
+    def _after(self):
         """
         Insert content, specified by the parameter, after each element in the set of matched elements.
         """
         pass
 
-    def attr(self):
+    def _attr(self):
         """
         Get the value of an attribute for the first element in the set of matched elements or set one or more attributes for every matched element.
         """
         pass
 
-    def clone(self):
+    def _clone(self):
         """
         Create a deep copy of the set of matched elements.
         """
         pass
 
-    def empty(self):
+    def _empty(self):
         """
         Remove all child nodes of the set of matched elements from the DOM.
         """
         pass
 
-    def find(self):
+    def _find(self):
         """!
         Get the descendants of each element in the current set of matched elements, filtered by a selector, jQuery object, or element.
         """
         pass
 
-    def first(self):
+    def _first(self):
         """
         Reduce the set of matched elements to the first in the set.
         """
         pass
 
-    def has(self):
+    def _has(self):
         """
         Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
         """
         pass
 
-    def hide(self):
+    def _hide(self):
         """!
         Hide the matched elements.
         """
@@ -408,14 +404,14 @@ class HouQuery(SQueryCommon):
         """
         pass
 
-    def next(self):
+    def _next(self):
         """
         Get the immediately following sibling of each element in the set of matched elements. 
         If a selector is provided, it retrieves the next sibling only if it matches that selector.
         """
         pass
 
-    def nextAll(self):
+    def _nextAll(self):
         """
         Get all following siblings of each element in the set of matched elements, optionally filtered by a selector.
         """
@@ -427,7 +423,7 @@ class HouQuery(SQueryCommon):
         """
         pass
 
-    def parent(self):
+    def _parent(self):
         """!
         Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
         """

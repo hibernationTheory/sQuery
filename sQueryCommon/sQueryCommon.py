@@ -67,7 +67,6 @@ class SQueryCommon(object):
             if lenMethods != 1:
                 remainingMethods = methods[1:]
                 if type == "dict":
-                    print method["args"]
                     result = self._getAttr(result(*method["args"], **method["kwargs"]), **{"methods":remainingMethods})
                 else:
                     result = self._getAttr(result(), **{"methods":remainingMethods})
