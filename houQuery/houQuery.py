@@ -221,39 +221,23 @@ class HouQuery(SQueryCommon):
     # PARM STUFF
     #################
 
-    def parm(self, parmName, parmValue = None):
-        #print "\nfunc parm"
-
-        returnData = []
+    def setAttr(self, parmName, parmValue):
         for i in self._data:
-            parm = i.parm(parmName)
-            if parmValue:
-                parm.set(parmValue)
-            returnData.append(parm)
-
-        return HouQuery(data=returnData)
-
-    def setParmValue(self, parmValue):
-        self._callAttrOnMultiple(**{
-            "data":self._data,
-             "attr":"set",
-             "value":parmValue
-            })
+            self._getAttrMultiple(i, **{"methods":
+                [("parm", parmName), ("set", parmValue)]})
         return HouQuery(data=self._data)
 
-    def replaceParmValue(self, parmValue, targetValue):
+    def replaceAttrValue(self, parmName, parmValue, parmTargetValue):
         for i in self._data:
-            value = i.eval()
-            newValue = value.replace(parmValue, targetValue)
-            i.set(newValue)
+            parmObject = self._getAttrMultiple(i, **{"methods":
+                [("parm", parmName)]})
+            parmObjectValue = parmObject.eval()
+            if isinstance(parmObjectValue, str):
+                newValue = parmObjectValue.replace(parmValue, parmTargetValue)
+                parmObject.set(newValue)
+            else:
+                break
         return HouQuery(data=self._data)
-
-    def evalParm(self):
-        values = self._callAttrOnMultiple(**{
-            "data":self._data,
-             "attr":"eval",
-            })
-        return HouQuery(data=values)
 
     #################
     # BUNDLE STUFF
