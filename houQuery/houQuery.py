@@ -225,14 +225,18 @@ class HouQuery(SQueryCommon):
     #################
 
     def setAttr(self, parmName, parmValue):
-        self._getAttrMultiple(self._data, **{"methods":
-                [("parm", parmName), ("set", parmValue)]})
+        self._getAttrMultiple(self._data, **{"methods":[
+                 {"name":"parm", "args":parmName}, 
+                 {"name":"set", "args":parmValue}
+                ]})
         return HouQuery(data=self._data)
 
     def replaceAttrValue(self, parmName, parmValue, parmTargetValue):
         for i in self._data:
-            parmObject = self._getAttr(i, **{"methods":
-                [("parm", parmName)]})
+            parmObject = self._getAttr(i, **{"methods":[
+                {"name":"parm", "args":parmName}
+                ]})
+            print parmObject
             parmObjectValue = parmObject.eval()
             if isinstance(parmObjectValue, str):
                 newValue = parmObjectValue.replace(parmValue, parmTargetValue)
@@ -304,8 +308,13 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=self._data)
 
     def _callAttrSingleValue(self, *args, **kwargs):
+        # deleting the _sQueryMethodName that comes from the decorator
+        # to have it not passed to underlying Hou objects
+        methodName = kwargs.get("_sQueryMethodName")
+        del kwargs["_sQueryMethodName"]
+
         self._getAttrMultiple(self._data, **{"methods":
-                [(kwargs["methodName"], args[0])]})
+                [{"name":methodName, "args":args, "kwargs":kwargs}]})
         return HouQuery(data=self._data)
 
     @sq.methodName
@@ -325,8 +334,8 @@ class HouQuery(SQueryCommon):
         return self._callAttrSingleValue(*args, **kwargs)
 
     @sq.methodName
-    def destroy(self, **kwargs):
-        self._callAttr(**kwargs)
+    def destroy(self, *args, **kwargs):
+        self._callAttrSingleValue(*args, **kwargs)
 
     ################################
     # Below are from the jQuery API

@@ -5,7 +5,7 @@ def methodName(fn):
         """
         feeds the name of the method as an argument to the method itself
         """
-        kwargs["methodName"] = fn.func_name
+        kwargs["_sQueryMethodName"] = fn.func_name
         fn(*args, **kwargs)
     return inner
 
@@ -43,26 +43,40 @@ class SQueryCommon(object):
 
         lenMethods = len(methods)
         for method in methods:
-            if isinstance(method, tuple):
-                result = getattr(node, method[0])
-                type = "tuple"
+            if isinstance(method, dict):
+                result = getattr(node, method["name"])
+                if not method.get("args", None):
+                    method["args"] = ()
+                if not method.get("kwargs", None):
+                    method["kwargs"] = {}
+                if isinstance(method["args"], list):
+                    #wrong data type, it should have been a tuple, convert
+                    method["args"] = tuple(method["args"])
+                if not isinstance(method["args"], tuple):
+                    #you are forgetting to provide tuples for single arg, compansate
+                    #convenience
+                    method["args"] = (method["args"],)
+                type = "dict"
+
             else:
                 result = getattr(node, method)
-                type = "nonTuple"
+                type = "nonDict"
+
             if not result:
                 return None
             if lenMethods != 1:
                 remainingMethods = methods[1:]
-                if type == "tuple":
-                    result = self._getAttr(result(method[1]), **{"methods":remainingMethods})
+                if type == "dict":
+                    print method["args"]
+                    result = self._getAttr(result(*method["args"], **method["kwargs"]), **{"methods":remainingMethods})
                 else:
                     result = self._getAttr(result(), **{"methods":remainingMethods})
                 if not result:
                     return None
                 break
             else:
-                if type=="tuple":
-                    return result(method[1])
+                if type=="dict":
+                    return result(*method["args"], **method["kwargs"])
                 else:
                     return result()
 
