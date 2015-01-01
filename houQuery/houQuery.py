@@ -28,13 +28,20 @@ class HouQuery(SQueryCommon):
         if initValue in contexts:
             self._data = [hou.node("/" + initValue)]
 
-    def _parseAttributeFilterData(self, filterData=None):
-        if not filterData:
-            return None
-
+    def _parseAttributeFilterSyntax(self, filterData):
         if not filterData.startswith("[") and not filterData.endswith("]"):
             return None
+        if filterData.count("=") > 1:
+            print "This object doesn't handle parameter expressions that has more than 1 '='"
+            return None
+        if filterData.find("=") != -1:
+            return "attrValue"
+        else:
+            return "attr"
 
+    def _parseAttributeFilterData(self, filterData):
+        if not filterData.startswith("[") and not filterData.endswith("]"):
+            return None
         if filterData.count("=") > 1:
             print "This object doesn't handle parameter expressions that has more than 1 '='"
             return None
@@ -88,7 +95,8 @@ class HouQuery(SQueryCommon):
                     filterName = filterData[2:]
                     filterValue = filterName
                 elif filterData.startswith("[") and filterData.endswith("]"):
-                    filterKind = "attr"
+                    filterKind = self._parseAttributeFilterSyntax(filterData)
+
                     attrFilterData = self._parseAttributeFilterData(filterData)
                     filterName = attrFilterData.get("filterParmName")
                     filterValue = attrFilterData.get("filterParmValue")
@@ -103,8 +111,13 @@ class HouQuery(SQueryCommon):
                     callback = self._getAttrMultiple
                     callbackKwargs = {"methods":callbackKwargsValue}
                 elif filterKind == "attr":
+                    callbackKwargsValue = [("parm", "scale")]
                     filterFunction = self._getAttrMultiple
-                    filterFunctionKwargs = {"methods":["parm"], "value":filterName}
+                    filterFunctionKwargs = {"methods":callbackKwargsValue}
+                elif filterKind == "attrValue":
+                    callbackKwargsValue = [("parm", filterName), "evalAsString"]
+                    callback = self._getAttrMultiple
+                    callbackKwargs = {"methods":callbackKwargsValue}
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch

@@ -41,21 +41,32 @@ class SQueryCommon(object):
         #__call__
         
         methods = kwargs.get("methods", None)
-        value = kwargs.get("value", None)
 
-        if not methods:
+        if not methods or not node:
             return None
 
         lenMethods = len(methods)
         for method in methods:
-            result = getattr(node, method)
+            if isinstance(method, tuple):
+                result = getattr(node, method[0])
+                type = "tuple"
+            else:
+                result = getattr(node, method)
+                type = "nonTuple"
+            if not result:
+                return None
             if lenMethods != 1:
                 remainingMethods = methods[1:]
-                result = self._getAttrMultiple(result(), **{"methods":remainingMethods})
+                if type == "tuple":
+                    result = self._getAttrMultiple(result(method[1]), **{"methods":remainingMethods})
+                else:
+                    result = self._getAttrMultiple(result(), **{"methods":remainingMethods})
+                if not result:
+                    return None
                 break
             else:
-                if value:
-                    return result(value)
+                if type=="tuple":
+                    return result(method[1])
                 else:
                     return result()
 
@@ -95,6 +106,7 @@ class SQueryCommon(object):
         pattern = kwargs.get("pattern", None)
         callback = kwargs.get("callback", None)
         callbackKwargs = kwargs.get("callbackKwargs", {})
+        result = None
 
         if not pattern:
             return None
@@ -102,5 +114,6 @@ class SQueryCommon(object):
         if callback:
             name = callback(name, **callbackKwargs)
 
-        result = fnmatch.fnmatch(name, pattern)
+        if name:
+            result = fnmatch.fnmatch(name, pattern)
         return result
