@@ -332,6 +332,132 @@ class HouQuery(SQueryCommon):
         self._callAttrWithMethodName(*args, **kwargs)
         return HouQuery(data=None)
 
+    #################
+    # NODE CREATION / DELETION
+    #################
+
+    def createNodeInside(self, typeName, nodeParms=None):
+        #print "\nfunc createNodeInside"
+
+        returnData = []
+        for i in self._data:
+            filteredData = self._filterData(**{
+            "data":i,
+            "callback":self._createNodeInsideParent,
+            "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
+            })
+            if filteredData:
+                returnData.append(filteredData)
+
+        return HouQuery(data=returnData)
+
+    def createNodeAfter(self, typeName, nodeParms=None):
+        #print "\nfunc createNodeAfter"
+
+        returnData = []
+        for i in self._data:
+            filteredData = self._filterData(**{
+                "data":i,
+                "callback":self._createNodeAfterGivenNode,
+                "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
+                })
+            if filteredData:
+                returnData.append(filteredData)
+
+        return HouQuery(data=returnData)
+
+    def createNodeBefore(self, typeName, nodeParms=None):
+        #print "\nfunc createNodeBefore"
+
+        returnData = []
+        for i in self._data:
+            filteredData = self._filterData(**{
+                "data":i,
+                "callback":self._createNodeBeforeGivenNode,
+                "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
+                })
+            if filteredData:
+                returnData.append(filteredData)
+
+        return HouQuery(data=returnData)
+
+    def _createNodeInsideParent(self, parent, **kwargs):
+        typeName = kwargs.get("typeName", None)
+        nodeName = kwargs.get("nodeName", None)
+        parms = kwargs.get("parms", None)
+
+        if not parent or not typeName:
+            return None
+
+        node = parent.createNode(typeName)
+        if nodeName:
+            print nodeName, node
+            node.setName(nodeName)
+        if parms:
+            node.setParms(parms)
+
+        return node
+
+    def _createNodeBeforeGivenNode(self, givenNode, **kwargs):
+        nodeCreated = self._createNodeInsideParent(givenNode.parent(), **kwargs)
+        self._insertNode(**{
+            "nodeToInsert":nodeCreated,
+            "targetNode":givenNode,
+            "location":"before",
+            "layoutChildren":True
+        })
+
+        return nodeCreated
+
+    def _createNodeAfterGivenNode(self, givenNode, **kwargs):
+        nodeCreated = self._createNodeInsideParent(givenNode.parent(), **kwargs)
+        self._insertNode(**{
+            "nodeToInsert":nodeCreated,
+            "targetNode":givenNode,
+            "location":"after",
+            "layoutChildren":True
+        })
+
+        return nodeCreated
+
+    def _insertNode(self, **kwargs):
+        nodeToInsert = kwargs.get("nodeToInsert", None)
+        targetNode = kwargs.get("targetNode", None)
+        location = kwargs.get("location", "before")
+        targetInsertIndex = kwargs.get("targetInsertIndex", 0)
+        nodeInsertIndex = kwargs.get("nodeInsertIndex", 0)
+        layoutChildren = kwargs.get("layoutChildren", False)
+
+        if not nodeToInsert or not targetNode:
+            return None
+
+        targetNodeInput = None
+        targetNodeOutput = None
+
+        if location == "before":
+            targetNodeInputs = targetNode.inputs()
+            if targetNodeInputs:
+                targetNodeInput = targetNodeInputs[targetInsertIndex]
+
+            targetNode.setInput(targetInsertIndex, nodeToInsert)
+            if targetNodeInput:
+                nodeToInsert.setInput(nodeInsertIndex, targetNodeInput)
+                
+
+        if location == "after":
+            targetNodeOutputs = targetNode.outputs()
+            if targetNodeOutputs:
+                targetNodeOutput = targetNodeOutputs[targetInsertIndex]
+
+            nodeToInsert.setInput(nodeInsertIndex, targetNode)
+            if targetNodeOutput:
+                targetNodeOutput.setInput(targetInsertIndex, nodeToInsert)
+
+        if layoutChildren:
+            parent = targetNode.parent()
+            parent.layoutChildren()
+
+        return False
 
     ################################
     # Below are from the jQuery API
@@ -433,118 +559,5 @@ class HouQuery(SQueryCommon):
 
 
 
-    #################
-    # NODE CREATION / DELETION
-    #################
 
-    def createNodeInside(self, typeName, nodeParms=None):
-        #print "\nfunc createNodeInside"
-
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._createNodeInsideParent,
-            "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
-            })
-
-        return SceneQuery(data=returnData)
-
-    def createNodeAfter(self, typeName, nodeParms=None):
-        #print "\nfunc createNodeAfter"
-
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._createNodeAfterGivenNode,
-            "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
-            })
-
-        return SceneQuery(data=returnData)
-
-    def createNodeBefore(self, typeName, nodeParms=None):
-        #print "\nfunc createNodeBefore"
-
-        returnData = self._filterData(**{
-            "data":self._data,
-            "callback":self._createNodeBeforeGivenNode,
-            "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
-            })
-
-        return SceneQuery(data=returnData)
-
-    def _createNodeInsideParent(self, parent, **kwargs):
-        typeName = kwargs.get("typeName", None)
-        nodeName = kwargs.get("nodeName", None)
-        parms = kwargs.get("parms", None)
-
-        if not parent or not typeName:
-            return None
-
-        node = parent.createNode(typeName)
-        if nodeName:
-            print nodeName, node
-            node.setName(nodeName)
-        if parms:
-            node.setParms(parms)
-
-        return node
-
-    def _createNodeBeforeGivenNode(self, givenNode, **kwargs):
-        nodeCreated = self._createNodeInsideParent(givenNode.parent(), **kwargs)
-        self._insertNode(**{
-            "nodeToInsert":nodeCreated,
-            "targetNode":givenNode,
-            "location":"before",
-            "layoutChildren":True
-        })
-
-        return nodeCreated
-
-    def _createNodeAfterGivenNode(self, givenNode, **kwargs):
-        nodeCreated = self._createNodeInsideParent(givenNode.parent(), **kwargs)
-        self._insertNode(**{
-            "nodeToInsert":nodeCreated,
-            "targetNode":givenNode,
-            "location":"after",
-            "layoutChildren":True
-        })
-
-        return nodeCreated
-
-    def _insertNode(self, **kwargs):
-        nodeToInsert = kwargs.get("nodeToInsert", None)
-        targetNode = kwargs.get("targetNode", None)
-        location = kwargs.get("location", "before")
-        targetInsertIndex = kwargs.get("targetInsertIndex", 0)
-        nodeInsertIndex = kwargs.get("nodeInsertIndex", 0)
-        layoutChildren = kwargs.get("layoutChildren", False)
-
-        if not nodeToInsert or not targetNode:
-            return None
-
-        targetNodeInput = None
-        targetNodeOutput = None
-
-        if location == "before":
-            targetNodeInputs = targetNode.inputs()
-            if targetNodeInputs:
-                targetNodeInput = targetNodeInputs[targetInsertIndex]
-
-            targetNode.setInput(targetInsertIndex, nodeToInsert)
-            if targetNodeInput:
-                nodeToInsert.setInput(nodeInsertIndex, targetNodeInput)
-                
-
-        if location == "after":
-            targetNodeOutputs = targetNode.outputs()
-            if targetNodeOutputs:
-                targetNodeOutput = targetNodeOutputs[targetInsertIndex]
-
-            nodeToInsert.setInput(nodeInsertIndex, targetNode)
-            if targetNodeOutput:
-                targetNodeOutput.setInput(targetInsertIndex, nodeToInsert)
-
-        if layoutChildren:
-            parent = targetNode.parent()
-            parent.layoutChildren()
-
-        return False
 """

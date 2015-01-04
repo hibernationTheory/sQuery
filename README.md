@@ -40,13 +40,13 @@ sq.children("[scale=1]") # returns all the children nodes with the attribute sca
 - Here is an example to a more complex operation you can perform.
 ```python
 sq.children("*geo*").filter("t#instanc*").children("t#alembic").replaceAttrValue("file_path", "v002", "v003")
-.setUserData("is_altered", "true").addToBundle("alembics_inside_instances").setSelected(True)
+.setUserData("is_altered", "true").addToBundle("alembics_inside_instances").createNodeAfter("delete", {"group":"*_arms_"}).setSelected(True)
 """
-selects all the children in obj context that matches to the *geo* pattern, 
+selects all the children in obj context with name that matches to the *geo* pattern, 
 from the selection filters that are those whose type matches to the pattern *instanc*, 
 chooses their alembic type children, replaces the v002 attribute on the alembic nodes file_path parameter with v003, 
 creates a user data on them called "is_altered" with the value "true" 
-and adds those alembics to the bundle "alembics_inside_instances" and sets them selected.
+and adds those alembics to the bundle "alembics_inside_instances" and creates a delete node after them with the 'group' parameter set to '*_arms_*' and selected this 'delete' node that was created.
 """
 ```
 ##API
@@ -65,4 +65,7 @@ The full API is not yet documented but here is some of the commands that are ava
 - setUserData
 - destroyUserData
 - destroy
+- createNodeInside
+- createNodeAfter
+- createNodeBefore
 
