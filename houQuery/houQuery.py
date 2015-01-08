@@ -151,7 +151,6 @@ class HouQuery(SQueryCommon):
         
 
     def children(self, filterData=None):
-        #print "\nfunc children"
         """
         Get the children of each element in the set of matched elements, optionally filtered by a selector.
         """
@@ -163,6 +162,26 @@ class HouQuery(SQueryCommon):
 
         for data in self._data:
             for child in data.children():
+                filteredData = self._filterData(child, **filterOptions)
+                if filteredData:
+                    returnData.append(filteredData)
+
+        return HouQuery(data=returnData, prevData=self._data)
+
+    def find(self, filterData=None):
+        #print "\nfunc children"
+        """
+        Get the all the children (including sub) of each element
+        in the set of matched elements, optionally filtered by a selector.
+        """
+
+        returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+        print filterOptions
+
+        for data in self._data:
+            for child in data.allSubChildren():
                 filteredData = self._filterData(child, **filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
@@ -185,6 +204,49 @@ class HouQuery(SQueryCommon):
                 returnData.append(filteredData)
 
         return HouQuery(data=returnData, prevData=self._data)
+
+    def prev(self, index=0):
+        """
+        Gets the previous connected element of the selection at the given index.
+        """
+        pass
+
+        returnData = []
+
+        for data in self._data:
+            connection = self._connection(data, **{"index":index, "mode":"inputs"})
+            if connection:
+                returnData.append(connection)
+
+        return HouQuery(data=returnData, prevData=self._data)
+
+    def next(self, index=0):
+        """
+        Gets the next connected element of the selection at the given index.
+        """
+        pass
+
+        returnData = []
+
+        for data in self._data:
+            connection = self._connection(data, **{"index":index, "mode":"outputs"})
+            if connection:
+                returnData.append(connection)
+
+        return HouQuery(data=returnData, prevData=self._data)
+
+    def _connection(self, node, **kwargs):
+        """given the node gets the previous or next connected node (at the given index)"""
+        mode = kwargs.get("mode", None)
+        if not mode:
+            return None
+        index = kwargs.get("index", 0)
+        result = None
+
+        connections = self._getAttr(node, **{"methods":[mode]})
+        if connections and index < len(connections):
+            result = connections[index]
+        return result
 
 
     #################
