@@ -35,11 +35,20 @@ class HouQuery(SQueryCommon):
             print "This object doesn't handle parameter expressions that has more than 1 '='"
             return None
         if filterData.find("=") != -1:
-            return "attrValue"
+            if filterData.find("~="):
+                return "attrContains"
+            if filterData.find("$="):
+                return "attrEnds"
+            if filterData.find("!="):
+                return "attrNot"
+            if filterData.find("^="):
+                return "attrStarts"
+            else:
+                return "attrValue"
         else:
             return "attr"
 
-    def _parseAttributeFilterData(self, filterData):
+    def _parseAttributeFilterData(self, filterData, filterKind):
         if not filterData.startswith("[") and not filterData.endswith("]"):
             return None
         if filterData.count("=") > 1:
@@ -47,13 +56,15 @@ class HouQuery(SQueryCommon):
             return None
 
         filterDataContent = filterData[1:-1]
+        filterTypes = ["attrContains", "attrEnds", "attrNot", "attrStarts"]
         eqSignLoc = filterDataContent.find("=")
-        if eqSignLoc == -1:
-            filterParmName = filterDataContent
-            filterParmValue = None
-        else:
+
+        if filterKind == "attrValue":
             filterParmName = filterDataContent[:eqSignLoc]
             filterParmValue = filterDataContent[eqSignLoc+1:]
+        elif filterKind in filterTypes:
+            filterParmName = filterDataContent[:eqSignLoc -1]
+            filterParmValue = filterDataContent[:eqSignLoc+1:]
 
         return {"filterParmName":filterParmName, "filterParmValue":filterParmValue}
 
@@ -91,7 +102,7 @@ class HouQuery(SQueryCommon):
                     filterValue = filterName
                 elif filterData.startswith("[") and filterData.endswith("]"):
                     filterKind = self._parseAttributeFilterSyntax(filterData)
-                    attrFilterData = self._parseAttributeFilterData(filterData)
+                    attrFilterData = self._parseAttributeFilterData(filterData, filterKind)
                     filterName = attrFilterData.get("filterParmName")
                     filterValue = attrFilterData.get("filterParmValue")
                 else: # will be considered a plain name
@@ -113,6 +124,10 @@ class HouQuery(SQueryCommon):
                 elif filterKind == "attrValue":
                     callbackKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}]}
                     callback = self._getAttr
+                elif filterKind == "attrContains":
+                    callbackKwargs = {"methods":[{"name":"parm", "args":filterName}]}
+                    filterFunction = self._getAttr
+                    filterFunctionKwargs = callbackKwargs
 
         if filterName.find("*") != -1:
             filterFunction = self._fnMatch
@@ -273,6 +288,9 @@ class HouQuery(SQueryCommon):
                     returnData.append(i)
 
         return HouQuery(data=returnData, prevData=self._data)
+
+    def _contains(self, targetValue):
+        pass
 
     #################
     # PARM STUFF
