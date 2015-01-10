@@ -59,13 +59,18 @@ class HouQuery(SQueryCommon):
         filterTypes = ["attrContains", "attrEnds", "attrNot", "attrStarts"]
         eqSignLoc = filterDataContent.find("=")
 
+        filterParmName = ""
+        filterParmValue = None
+
         if filterKind == "attrValue":
             filterParmName = filterDataContent[:eqSignLoc]
             filterParmValue = filterDataContent[eqSignLoc+1:]
+        elif filterKind == "attr":
+            filterParmName = filterDataContent
         elif filterKind in filterTypes:
             filterParmName = filterDataContent[:eqSignLoc -1]
             filterParmValue = filterDataContent[:eqSignLoc+1:]
-
+            
         return {"filterParmName":filterParmName, "filterParmValue":filterParmValue}
 
     def _generateFilterOptions(self, filterData=None):
