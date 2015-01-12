@@ -62,7 +62,7 @@ class SQueryCommon(object):
                 result = getattr(node, method)
                 type = "nonDict"
 
-            if not result:
+            if result is None:
                 return None
             if lenMethods != 1:
                 remainingMethods = methods[1:]
@@ -70,7 +70,7 @@ class SQueryCommon(object):
                     result = self._getAttr(result(*method["args"], **method["kwargs"]), **{"methods":remainingMethods})
                 else:
                     result = self._getAttr(result(), **{"methods":remainingMethods})
-                if not result:
+                if result is None:
                     return None
                 break
             else:
@@ -82,7 +82,7 @@ class SQueryCommon(object):
         return result
 
     def _filterData(self, data, **kwargs):
-        #print "\nfunc _filterData"
+        # filters the given scene object using the kwargs parameters
         callback = kwargs.get("callback", None)
         callbackKwargs = kwargs.get("callbackKwargs", {})
         filterValue = kwargs.get("filterValue", None)
@@ -97,18 +97,19 @@ class SQueryCommon(object):
         if filterFunction and filterValue:
             filterResult = filterFunction(data, **filterFunctionKwargs)
             if filterResult == filterValue:
-                if data:return data
+                return data
+
+        elif filterFunction and not filterValue:
+            filterResult = filterFunction(data, **filterFunctionKwargs)
+            if filterResult:
+                return data
 
         elif not filterFunction and filterValue:
-            if result == filterValue:
-                if data:return data
-
-        elif filterFunction and not filterValue: #!?
-            filterResult = filterFunction(data, **filterFunctionKwargs)
-            if filterResult:return data
+            print "error: filterValue is supplied without filterFunction"
+            raise TypeError #! temporary way of dealing with this.
 
         else: # if no filter function action happening
-            if result:return result
+            return result
 
     def _fnMatch(self, name, **kwargs):
         pattern = kwargs.get("pattern", None)

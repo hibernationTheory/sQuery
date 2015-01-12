@@ -35,13 +35,13 @@ class HouQuery(SQueryCommon):
             print "This object doesn't handle parameter expressions that has more than 1 '='"
             return None
         if filterData.find("=") != -1:
-            if filterData.find("~="):
+            if filterData.find("~=") != -1:
                 return "attrContains"
-            if filterData.find("$="):
+            if filterData.find("$=") != -1:
                 return "attrEnds"
-            if filterData.find("!="):
+            if filterData.find("!=") != -1:
                 return "attrNot"
-            if filterData.find("^="):
+            if filterData.find("^=") != -1:
                 return "attrStarts"
             else:
                 return "attrValue"
@@ -68,9 +68,9 @@ class HouQuery(SQueryCommon):
         elif filterKind == "attr":
             filterParmName = filterDataContent
         elif filterKind in filterTypes:
-            filterParmName = filterDataContent[:eqSignLoc -1]
-            filterParmValue = filterDataContent[:eqSignLoc+1:]
-            
+            filterParmName = filterDataContent[:eqSignLoc-1]
+            filterParmValue = filterDataContent[eqSignLoc+1:]
+
         return {"filterParmName":filterParmName, "filterParmValue":filterParmValue}
 
     def _generateFilterOptions(self, filterData=None):
@@ -96,6 +96,7 @@ class HouQuery(SQueryCommon):
                     filterKind = "name"
                     filterName = filterData[filterKind]
                     filterValue = filterName
+
             elif isinstance(filterData, str):
                 if filterData.startswith("t#"):
                     filterKind = "type"
@@ -117,11 +118,12 @@ class HouQuery(SQueryCommon):
 
             if filterKind:
                 if filterKind == "type":
-                    callbackKwargs = {"methods":["type", "name"]}
                     callback = self._getAttr
+                    callbackKwargs = {"methods":["type", "name"]}
                 elif filterKind == "name":
                     callbackKwargs = {"methods":["name"]}
                     callback = self._getAttr
+                #attribute related filters
                 elif filterKind == "attr":
                     callbackKwargs = {"methods":[{"name":"parm", "args":filterName}]}
                     filterFunction = self._getAttr
@@ -130,14 +132,31 @@ class HouQuery(SQueryCommon):
                     callbackKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}]}
                     callback = self._getAttr
                 elif filterKind == "attrContains":
-                    callbackKwargs = {"methods":[{"name":"parm", "args":filterName}]}
-                    filterFunction = self._getAttr
-                    filterFunctionKwargs = callbackKwargs
+                    targetValue = filterValue
+                    filterValue = None
+                    filterFunction = self._attrContains
+                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                elif filterKind == "attrStarts":
+                    targetValue = filterValue
+                    filterValue = None
+                    filterFunction = self._attrStarts
+                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                elif filterKind == "attrEnds":
+                    targetValue = filterValue
+                    filterValue = None
+                    filterFunction = self._attrEnds
+                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                elif filterKind == "attrNot":
+                    targetValue = filterValue
+                    filterValue = None
+                    filterFunction = self._attrNot
+                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
 
-        if filterName.find("*") != -1:
-            filterFunction = self._fnMatch
-            filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttr, "callbackKwargs":callbackKwargs}
-            filterValue = True
+        if filterKind =="name" or filterKind =="type":
+            if filterName.find("*") != -1:
+                filterFunction = self._fnMatch
+                filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttr, "callbackKwargs":callbackKwargs}
+                filterValue = True
 
         filterReturnData = {
             "filterName":filterName,
@@ -294,8 +313,45 @@ class HouQuery(SQueryCommon):
 
         return HouQuery(data=returnData, prevData=self._data)
 
-    def _contains(self, targetValue):
-        pass
+    def _attrContains(self, givenValue, **kwargs):
+        targetValue = kwargs["targetValue"]
+        targetParm = kwargs["targetParm"]
+
+        parmValue = self._getAttr(givenValue, **kwargs)
+        if parmValue:
+            if parmValue.find(targetValue) != -1:
+                return True
+        return False
+
+    def _attrStarts(self, givenValue, **kwargs):
+        targetValue = kwargs["targetValue"]
+        targetParm = kwargs["targetParm"]
+
+        parmValue = self._getAttr(givenValue, **kwargs)
+        if parmValue:
+            if parmValue.startswith(targetValue):
+                return True
+        return False
+
+    def _attrEnds(self, givenValue, **kwargs):
+        targetValue = kwargs["targetValue"]
+        targetParm = kwargs["targetParm"]
+
+        parmValue = self._getAttr(givenValue, **kwargs)
+        if parmValue:
+            if parmValue.endswith(targetValue):
+                return True
+        return False
+
+    def _attrNot(self, givenValue, **kwargs):
+        targetValue = kwargs["targetValue"]
+        targetParm = kwargs["targetParm"]
+
+        parmValue = self._getAttr(givenValue, **kwargs)
+        if parmValue:
+            if parmValue != targetValue:
+                return True
+        return False
 
     #################
     # PARM STUFF
@@ -426,8 +482,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterData(**{
-            "data":i,
+            filteredData = self._filterData(i, **{
             "callback":self._createNodeInsideParent,
             "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
             })
@@ -441,8 +496,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterData(**{
-                "data":i,
+            filteredData = self._filterData(i, **{
                 "callback":self._createNodeAfterGivenNode,
                 "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
                 })
@@ -456,8 +510,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterData(**{
-                "data":i,
+            filteredData = self._filterData(i, **{
                 "callback":self._createNodeBeforeGivenNode,
                 "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
                 })
