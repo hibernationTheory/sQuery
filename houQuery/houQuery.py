@@ -289,29 +289,8 @@ class HouQuery(SQueryCommon):
 
 
     #################
-    # CONTENT FILTERS
+    # ATTRIBUTE FILTERS
     #################
-
-    def parmEqualTo(self, targetValue):
-        #print "\nfunc parmEqualTo"
-        returnData = []
-        for i in self._data:
-            value = i.eval()
-            if value == targetValue:
-                returnData.append(i)
-
-        return HouQuery(data=returnData, prevData=self._data)
-
-    def parmContains(self, targetValue):
-        #print "\nfunc parmContains"
-        returnData = []
-        for i in self._data:
-            value = i.eval()
-            if isinstance(value, str):
-                if value.find(targetValue) != -1:
-                    returnData.append(i)
-
-        return HouQuery(data=returnData, prevData=self._data)
 
     def _attrContains(self, givenValue, **kwargs):
         targetValue = kwargs["targetValue"]
