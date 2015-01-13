@@ -105,8 +105,12 @@ class SQueryCommon(object):
                 return data
 
         elif not filterFunction and filterValue:
-            print "error: filterValue is supplied without filterFunction"
-            raise TypeError #! temporary way of dealing with this.
+            #!the working of type and name functions are hinging on this.
+            #need to investigate for better implementation
+            #print "error: filterValue is supplied without filterFunction"
+            #raise TypeError #! temporary way of dealing with this.
+            if result == filterValue:
+                if data:return data
 
         else: # if no filter function action happening
             return result
