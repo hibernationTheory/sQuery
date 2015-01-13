@@ -3,11 +3,14 @@ import sys
 
 import hou
 
+
 CURRENT_DIR = os.path.dirname(__file__)
 PARENT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, os.pardir))
 sys.path.insert(0, PARENT_DIR)
 
 from sQueryCommon import sQueryCommon as sq
+from lib.houdini.eyevex.takes import takes
+
 reload(sq)
 SQueryCommon = sq.SQueryCommon
 
@@ -336,11 +339,17 @@ class HouQuery(SQueryCommon):
     # PARM STUFF
     #################
 
-    def setAttr(self, parmName, parmValue):
-        self._getAttrMultiple(self._data, **{"methods":[
-                 {"name":"parm", "args":parmName}, 
-                 {"name":"set", "args":parmValue}
-                ]})
+    def setAttr(self, parmName, parmValue, force=False):
+        if force: #! need to implement a proper force method that would override
+            # locked, parameter referenced, keyframed, etc.. parms.
+            take = takes.curTake()
+        for i in self._data:
+            if force:
+                take.addParm(i.parm(parmName))
+            self._getAttr(i, **{"methods":[
+                     {"name":"parm", "args":parmName}, 
+                     {"name":"set", "args":parmValue}
+                    ]})
         return HouQuery(data=self._data)
 
     def replaceAttrValue(self, parmName, parmValue, parmTargetValue):
