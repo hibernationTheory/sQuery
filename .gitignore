@@ -46,6 +46,6 @@ Temporary Items
 #Removing the SConstruct
 SConstruct
 *.pyc
-*.hip
+#*.hip
 *.hipnc
 notes.txt
