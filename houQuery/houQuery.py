@@ -254,7 +254,7 @@ class HouQuery(SQueryCommon):
 
         return HouQuery(data=returnData, prevData=self._data)
 
-    def prev(self, index=0):
+    def prev(self, index=0): #! needs to work with a filter
         """
         Gets the previous connected element of the selection at the given index.
         """
@@ -267,7 +267,7 @@ class HouQuery(SQueryCommon):
 
         return HouQuery(data=returnData, prevData=self._data)
 
-    def next(self, index=0):
+    def next(self, index=0): #! needs to work with a filter
         """
         Gets the next connected element of the selection at the given index.
         """
@@ -298,10 +298,33 @@ class HouQuery(SQueryCommon):
                 pathData.append(filteredData.path())
 
         return HouQuery(data=returnData, prevData=self._data)
+
+    def siblings(self, filterData=None):
+        """
+        Get the siblings of each element in the set of matched elements, optionally filtered by a selector.
+        """
+        returnData = []
+        pathData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._data:
+            parent = data.parent()
+            siblings = parent.children()
+            for sibling in siblings:
+                filteredData = self._filterData(sibling, **filterOptions)
+                if filteredData and filteredData.path() not in pathData: 
+                    #! do I need to perform this check for other methods as well to prevent data duplication? 
+                    returnData.append(filteredData)
+                    pathData.append(filteredData.path())
+
+        return HouQuery(data=returnData, prevData=self._data)
         
 
     def _connection(self, node, **kwargs):
-        """given the node gets the previous or next connected node (at the given index)"""
+        """
+        Given the node gets the previous or next connected node (at the given index)
+        """
         mode = kwargs.get("mode", None)
         if not mode:
             return None
