@@ -25,8 +25,6 @@ class HouQuery(SQueryCommon):
             self._init(initValue)
 
     def _init(self, initValue):
-        #print "\nfunc _init"
-
         contexts = ["obj", "shop", "out"]
         if initValue in contexts:
             self._data = [hou.node("/" + initValue)]
@@ -176,7 +174,6 @@ class HouQuery(SQueryCommon):
         """
         Add the previous set of elements on the stack to the current set, optionally filtered by a selector.
         """
-
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
@@ -190,17 +187,30 @@ class HouQuery(SQueryCommon):
         combinedData = self._data + returnData
 
         return HouQuery(data=combinedData, prevData=self._data)
-        
+
+    def isNot(self, filterData=None):
+        """
+        Remove elements from set of matched elements
+        """
+        returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._data:
+            filteredData = self._filterData(data, **filterOptions)
+            if not filteredData:
+                returnData.append(data)
+
+        return HouQuery(data=returnData, prevData=self._data)
+
 
     def children(self, filterData=None):
         """
         Get the children of each element in the set of matched elements, optionally filtered by a selector.
         """
-
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
-        print filterOptions
 
         for data in self._data:
             for child in data.children():
@@ -216,7 +226,6 @@ class HouQuery(SQueryCommon):
         Get the all the children (including sub) of each element
         in the set of matched elements, optionally filtered by a selector.
         """
-
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
@@ -234,8 +243,6 @@ class HouQuery(SQueryCommon):
         """
         Reduce the set of matched elements to those that match the selector or pass the function's test.
         """
-        pass
-
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
@@ -251,8 +258,6 @@ class HouQuery(SQueryCommon):
         """
         Gets the previous connected element of the selection at the given index.
         """
-        pass
-
         returnData = []
 
         for data in self._data:
@@ -266,8 +271,6 @@ class HouQuery(SQueryCommon):
         """
         Gets the next connected element of the selection at the given index.
         """
-        pass
-
         returnData = []
 
         for data in self._data:
@@ -276,6 +279,26 @@ class HouQuery(SQueryCommon):
                 returnData.append(connection)
 
         return HouQuery(data=returnData, prevData=self._data)
+
+    def parent(self, filterData=None):
+        """
+        Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
+        """
+        returnData = []
+        pathData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._data:
+            parent = data.parent()
+            filteredData = self._filterData(parent, **filterOptions)
+            if filteredData and filteredData.path() not in pathData: 
+            #! do I need to perform this check for other methods as well to prevent data duplication? 
+                returnData.append(filteredData)
+                pathData.append(filteredData.path())
+
+        return HouQuery(data=returnData, prevData=self._data)
+        
 
     def _connection(self, node, **kwargs):
         """given the node gets the previous or next connected node (at the given index)"""
@@ -466,7 +489,6 @@ class HouQuery(SQueryCommon):
     #################
 
     def createNodeInside(self, typeName, nodeParms=None):
-        #print "\nfunc createNodeInside"
 
         returnData = []
         for i in self._data:
@@ -480,7 +502,6 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=returnData)
 
     def createNodeAfter(self, typeName, nodeParms=None):
-        #print "\nfunc createNodeAfter"
 
         returnData = []
         for i in self._data:
@@ -494,7 +515,6 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=returnData)
 
     def createNodeBefore(self, typeName, nodeParms=None):
-        #print "\nfunc createNodeBefore"
 
         returnData = []
         for i in self._data:
@@ -625,12 +645,6 @@ class HouQuery(SQueryCommon):
         """
         pass
 
-    def _find(self):
-        """!
-        Get the descendants of each element in the current set of matched elements, filtered by a selector, jQuery object, or element.
-        """
-        pass
-
     def _first(self):
         """
         Reduce the set of matched elements to the first in the set.
@@ -668,22 +682,3 @@ class HouQuery(SQueryCommon):
         Get all following siblings of each element in the set of matched elements, optionally filtered by a selector.
         """
         pass
-
-    def _not(self):
-        """
-        Remove elements from the set of matched elements.
-        """
-        pass
-
-    def _parent(self):
-        """!
-        Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
-        """
-        pass
-
-"""
-
-
-
-
-"""
