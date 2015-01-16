@@ -3,7 +3,6 @@ import sys
 
 import hou
 
-
 CURRENT_DIR = os.path.dirname(__file__)
 PARENT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, os.pardir))
 sys.path.insert(0, PARENT_DIR)
@@ -19,7 +18,7 @@ class HouQuery(SQueryCommon):
         SQueryCommon.__init__(self, data, initValue)
         self._data = data
         self._prevData = prevData
-        print self._data
+        self._printContent(self._data)
 
         if initValue:
             self._init(initValue)
@@ -28,6 +27,16 @@ class HouQuery(SQueryCommon):
         contexts = ["obj", "shop", "out"]
         if initValue in contexts:
             self._data = [hou.node("/" + initValue)]
+
+    def _printContent(self, content):
+        divider = "*"*72
+        print divider
+        print "CURRENT SELECTION IS:"
+        if content:
+            print content
+        else:
+            print "EMPTY"
+        print divider
 
     def _parseAttributeFilterSyntax(self, filterData):
         if not filterData.startswith("[") and not filterData.endswith("]"):
@@ -229,7 +238,6 @@ class HouQuery(SQueryCommon):
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
-        print filterOptions
 
         for data in self._data:
             for child in data.allSubChildren():

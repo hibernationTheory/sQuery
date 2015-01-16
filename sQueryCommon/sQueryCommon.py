@@ -15,7 +15,8 @@ class SQueryCommon(object):
 
     def __str__(self):
         for i in self._data:
-            print i
+            if i:
+                print i
 
     def _getAttrMultiple(self, data, **kwargs):
         """
