@@ -188,7 +188,7 @@ class HouQuery(SQueryCommon):
 
         return HouQuery(data=combinedData, prevData=self._data)
 
-    def isNot(self, filterData=None):
+    def remove(self, filterData=None):
         """
         Remove elements from set of matched elements
         """
