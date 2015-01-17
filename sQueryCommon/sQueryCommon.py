@@ -46,15 +46,16 @@ class SQueryCommon(object):
         for method in methods:
             if isinstance(method, dict):
                 result = getattr(node, method["name"])
-                if not method.get("args", None):
+                if method.get("args", None) is None:
                     method["args"] = ()
-                if not method.get("kwargs", None):
+                if method.get("kwargs", None) is None:
                     method["kwargs"] = {}
+
                 if isinstance(method["args"], list):
                     #wrong data type, it should have been a tuple, convert
                     method["args"] = tuple(method["args"])
                 if not isinstance(method["args"], tuple):
-                    #you are forgetting to provide tuples for single arg, compansate
+                    #you are forgetting to provide tuples for single arg, compansate for
                     #convenience
                     method["args"] = (method["args"],)
                 type = "dict"
@@ -62,9 +63,9 @@ class SQueryCommon(object):
             else:
                 result = getattr(node, method)
                 type = "nonDict"
-
             if result is None:
                 return None
+
             if lenMethods != 1:
                 remainingMethods = methods[1:]
                 if type == "dict":
@@ -99,7 +100,6 @@ class SQueryCommon(object):
 
         if filterFunction and filterValue:
             filterResult = filterFunction(data, **filterFunctionKwargs)
-            print filterResult
             if postFilterFunction:
                 postResult = postFilterFunction(filterResult, **postFilterFunctionKwargs)
                 if postResult:

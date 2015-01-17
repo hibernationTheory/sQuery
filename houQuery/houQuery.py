@@ -423,8 +423,9 @@ class HouQuery(SQueryCommon):
             # locked, parameter referenced, keyframed, etc.. parms.
             take = takes.curTake()
         for i in self._data:
-            if force:
+            if force: #! temp implementation
                 take.addParm(i.parm(parmName))
+            print parmValue
             self._getAttr(i, **{"methods":[
                      {"name":"parm", "args":parmName}, 
                      {"name":"set", "args":parmValue}

@@ -310,6 +310,64 @@ class HouTests(unittest.TestCase):
 		sel = sq.children().remove("t#light").addBack("*box*")
 		self.assertListEqual(sel._data, selData)
 
+	def test_select_all_children_with_name_grid_set_keeppos_to_true(self):
+		selData = []
+		parmData = []
+		parmDataSq = []
+		objPath = "/obj"
+
+		for i in hou.node(objPath).children():
+			if i.name().find("grid") != -1:
+				selData.append(i)
+				p = i.parm("keeppos")
+				if p:
+					p.set(1)
+					if p.eval() == 1:
+						parmData.append(i)
+					p.set(0)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("*grid*")
+		sel.setAttr("keeppos", 1)
+
+		for i in sel._data:
+			p = i.parm("keeppos")
+			if p:
+				if p.eval() == 1:
+					parmDataSq.append(i)
+				p.set(0)
+
+		self.assertListEqual(parmDataSq, parmData)
+
+	def test_select_all_children_with_name_grid_keeppos_set_keeppos_to_false(self):
+		selData = []
+		parmData = []
+		parmDataSq = []
+		objPath = "/obj"
+		
+		for i in hou.node(objPath).children():
+			if i.name().find("grid_keeppos") != -1:
+				selData.append(i)
+				p = i.parm("keeppos")
+				if p:
+					p.set(0)
+					if p.eval() == 0:
+						parmData.append(i)
+					p.set(1)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("*grid_keeppos*")
+		sel.setAttr("keeppos", 0)
+
+		for i in sel._data:
+			p = i.parm("keeppos")
+			if p:
+				if p.eval() == 0:
+					parmDataSq.append(i)
+				p.set(1)
+
+		self.assertListEqual(parmDataSq, parmData)
+
 
 	""" yet to be implemented - multiple selections
 	def test_is_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):
