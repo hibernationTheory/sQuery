@@ -210,6 +210,58 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(sel._data, selData)
 
+	def test_is_all_children_with_type_name_has_light_but_name_not_box(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.type().name().find("light") != -1 and i.name().find("box") == -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("t#*light*").remove("*box*")
+
+		self.assertListEqual(sel._data, selData)
+
+	def test_is_all_subchildren_with_type_name_has_light_but_name_not_box(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("light") != -1 and i.name().find("box") == -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*light*").remove("*box*")
+
+		self.assertListEqual(sel._data, selData)
+
+	def test_is_all_subchildren_with_type_name_facet_with_parent_name_has_box(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("facet") != -1 and i.parent().name().find("box") != -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*facet*").parent("*box*")
+
+		self.assertListEqual(sel._data, selData)
+
+	def test_is_all_subchildren_with_siblings_to_facet_with_type_name_switch(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("facet") != -1:
+				parent = i.parent()
+				children = parent.children()
+				for j in children:
+					if j.type().name().find("switch") != -1:
+						selData.append(j)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*facet*").siblings("t#switch")
+
+		self.assertListEqual(sel._data, selData)
+
 
 	""" yet to be implemented - multiple selections
 	def test_is_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):
