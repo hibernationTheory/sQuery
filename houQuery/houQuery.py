@@ -508,6 +508,30 @@ class HouQuery(SQueryCommon):
     # NODE STATE
     #################
 
+    def select(self):
+        """
+        Convenience method for the setSelected(True)
+        """
+        self.setSelected(True)
+
+    def deselect(self):
+        """
+        Convenience method for the setSelected(False)
+        """
+        self.setSelected(False)
+
+    def show(self):
+        """
+        Convenience method for setDisplayFlag(True)
+        """
+        self.setDisplayFlag(True)
+        
+    def hide(self):
+        """
+        Convenience method for setDisplayFlag(False)
+        """
+        self.setDisplayFlag(False)
+
     def _callAttrWithMethodName(self, *args, **kwargs):
         # deleting the _sQueryMethodName that comes from the decorator
         # to have it not passed to underlying Hou objects

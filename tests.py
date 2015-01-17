@@ -378,6 +378,44 @@ class HouTests(unittest.TestCase):
 		sel = sQuery.sQuery(pointlight4)
 		self.assertListEqual(sel._data, selData)
 
+	def test_set_selected_for_all_subchildren_with_type_name_light_and_name_box(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("light") != -1 and i.name().find("box") != -1:
+				i.setSelected(True)
+
+		getSelected = list(hou.selectedNodes())
+		for i in getSelected:
+			i.setSelected(False)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*light*").filter("*box*").setSelected(True)
+		getSelectedSq = list(hou.selectedNodes())
+		for i in getSelectedSq:
+			i.setSelected(False)
+
+		self.assertListEqual(getSelectedSq, getSelected)
+
+	def test_select_for_all_subchildren_with_type_name_light_and_name_box(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("light") != -1 and i.name().find("box") != -1:
+				i.setSelected(True)
+
+		getSelected = list(hou.selectedNodes())
+		for i in getSelected:
+			i.setSelected(False)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*light*").filter("*box*").select()
+		getSelectedSq = list(hou.selectedNodes())
+		for i in getSelectedSq:
+			i.setSelected(False)
+
+		self.assertListEqual(getSelectedSq, getSelected)
+
 
 	""" yet to be implemented - multiple selections
 	def test_is_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):

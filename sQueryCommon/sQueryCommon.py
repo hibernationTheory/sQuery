@@ -13,10 +13,12 @@ class SQueryCommon(object):
     def __init__(self, initValue=None, data=[]):
         self._data = data
 
+    """
     def __str__(self):
         for i in self._data:
             if i:
                 print i
+    """
 
     def _getAttrMultiple(self, data, **kwargs):
         """
