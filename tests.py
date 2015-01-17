@@ -162,8 +162,7 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(sel._data, selData)
 
-	def test_is_all_children_with_name_has_sphere_and_shoppath_not(self): #! FAIL
-		# sq selection doesn't contain empty shop_materialpath attrs when it should
+	def test_is_all_children_with_name_has_sphere_and_shoppath_not(self):
 		selData = []
 		objPath = "/obj"
 		shop_path = "/shop/mantrasurface_unique"

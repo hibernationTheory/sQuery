@@ -369,7 +369,7 @@ class HouQuery(SQueryCommon):
         targetParm = kwargs["targetParm"]
 
         parmValue = self._getAttr(givenValue, **kwargs)
-        if parmValue:
+        if parmValue != None:
             if parmValue.find(targetValue) != -1:
                 return True
         return False
@@ -379,7 +379,7 @@ class HouQuery(SQueryCommon):
         targetParm = kwargs["targetParm"]
 
         parmValue = self._getAttr(givenValue, **kwargs)
-        if parmValue:
+        if parmValue != None:
             if parmValue.startswith(targetValue):
                 return True
         return False
@@ -389,7 +389,7 @@ class HouQuery(SQueryCommon):
         targetParm = kwargs["targetParm"]
 
         parmValue = self._getAttr(givenValue, **kwargs)
-        if parmValue:
+        if parmValue != None:
             if parmValue.endswith(targetValue):
                 return True
         return False
@@ -399,7 +399,7 @@ class HouQuery(SQueryCommon):
         targetParm = kwargs["targetParm"]
 
         parmValue = self._getAttr(givenValue, **kwargs)
-        if parmValue:
+        if parmValue != None:
             if parmValue != targetValue:
                 return True
         return False
@@ -409,7 +409,7 @@ class HouQuery(SQueryCommon):
         targetParm = kwargs["targetParm"]
 
         parmValue = self._getAttr(givenValue, **kwargs)
-        if parmValue:
+        if parmValue != None:
             if parmValue == targetValue:
                 return True
         return False
