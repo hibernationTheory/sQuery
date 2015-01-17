@@ -425,6 +425,25 @@ class HouQuery(SQueryCommon):
     # PARM STUFF
     #################
 
+    def toggle(self, parmName):
+        """
+        Given a parameter, toggle method sets it to 0 if it is 1 or vice versa
+        """
+        for i in self._data:
+            parmCurrentValue = self._getAttr(i, **{"methods":[
+                     {"name":"parm", "args":parmName},
+                     {"name":"eval"}
+                     ]})
+            if parmCurrentValue == False:
+                parmValue = True
+            elif parmCurrentValue == True:
+                parmValue = False
+            self._getAttr(i, **{"methods":[
+                     {"name":"parm", "args":parmName}, 
+                     {"name":"set", "args":parmValue}
+                    ]})
+        return HouQuery(data=self._data)
+
     def setAttr(self, parmName, parmValue, force=False):
         if force: #! need to implement a proper force method that would override
             # locked, parameter referenced, keyframed, etc.. parms.
@@ -525,7 +544,7 @@ class HouQuery(SQueryCommon):
         Convenience method for setDisplayFlag(True)
         """
         self.setDisplayFlag(True)
-        
+
     def hide(self):
         """
         Convenience method for setDisplayFlag(False)
