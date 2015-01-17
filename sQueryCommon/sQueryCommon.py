@@ -99,6 +99,7 @@ class SQueryCommon(object):
 
         if filterFunction and filterValue:
             filterResult = filterFunction(data, **filterFunctionKwargs)
+            print filterResult
             if postFilterFunction:
                 postResult = postFilterFunction(filterResult, **postFilterFunctionKwargs)
                 if postResult:
@@ -114,14 +115,6 @@ class SQueryCommon(object):
                     return data
             if filterResult:
                 return data
-
-        elif not filterFunction and filterValue:
-            #!the working of type and name functions are hinging on this.
-            #need to investigate for better implementation
-            #print "error: filterValue is supplied without filterFunction"
-            #raise TypeError #! temporary way of dealing with this.
-            if result == filterValue:
-                if data:return data
 
         else: # if no filter function action happening
             return result

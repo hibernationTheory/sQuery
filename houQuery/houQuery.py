@@ -137,12 +137,13 @@ class HouQuery(SQueryCommon):
                     filterFunction = self._getAttr
                 #attribute related filters
                 elif filterKind == "attr":
-                    callbackKwargs = {"methods":[{"name":"parm", "args":filterName}]}
                     filterFunction = self._getAttr
-                    filterFunctionKwargs = callbackKwargs
+                    filterFunctionKwargs =  {"methods":[{"name":"parm", "args":filterName}]}
                 elif filterKind == "attrValue":
-                    callbackKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}]}
-                    callback = self._getAttr
+                    targetValue = filterValue
+                    filterValue = None
+                    filterFunction = self._attrIs
+                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
                 elif filterKind == "attrContains":
                     targetValue = filterValue
                     filterValue = None
@@ -400,6 +401,16 @@ class HouQuery(SQueryCommon):
         parmValue = self._getAttr(givenValue, **kwargs)
         if parmValue:
             if parmValue != targetValue:
+                return True
+        return False
+
+    def _attrIs(self, givenValue, **kwargs):
+        targetValue = kwargs["targetValue"]
+        targetParm = kwargs["targetParm"]
+
+        parmValue = self._getAttr(givenValue, **kwargs)
+        if parmValue:
+            if parmValue == targetValue:
                 return True
         return False
 
