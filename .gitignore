@@ -49,3 +49,4 @@ SConstruct
 #*.hip
 *.hipnc
 notes.txt
+backup

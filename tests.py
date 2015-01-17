@@ -242,7 +242,7 @@ class HouTests(unittest.TestCase):
 				selData.append(i)
 
 		sq = sQuery.sQuery()
-		sel = sq.find("t#*facet*").parent("*box*")
+		sel = sq.find("t#*facet*").parent("*box*").children("t#facet")
 
 		self.assertListEqual(sel._data, selData)
 
@@ -259,7 +259,56 @@ class HouTests(unittest.TestCase):
 
 		sq = sQuery.sQuery()
 		sel = sq.find("t#*facet*").siblings("t#switch")
+		self.assertListEqual(sel._data, selData)
 
+	def test_next_node_to_all_subchildren_that_are_type_facet_at_index_zero(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("facet") != -1:
+				next = i.outputs()[0]
+				selData.append(next)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*facet*").next()
+		self.assertListEqual(sel._data, selData)
+
+	def test_prev_node_to_all_subchildren_that_are_switch_at_index_zero(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("switch") != -1:
+				prev = i.inputs()[0]
+				selData.append(prev)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*switch*").prev()
+		self.assertListEqual(sel._data, selData)
+
+	def test_prev_node_to_all_subchildren_that_are_switch_at_index_one(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).allSubChildren():
+			if i.type().name().find("switch") != -1:
+				prev = i.inputs()[1]
+				selData.append(prev)
+
+		sq = sQuery.sQuery()
+		sel = sq.find("t#*switch*").prev(index=1)
+		self.assertListEqual(sel._data, selData)
+
+	def test_select_all_children_remove_all_type_name_light_add_back_light_with_name_has_box(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.type().name().find("light") == -1:
+				selData.append(i)
+			else:
+				if i.name().find("box"):
+					selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children().remove("t#light").addBack("*box*")
 		self.assertListEqual(sel._data, selData)
 
 

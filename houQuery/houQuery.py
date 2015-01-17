@@ -262,29 +262,39 @@ class HouQuery(SQueryCommon):
 
         return HouQuery(data=returnData, prevData=self._data)
 
-    def prev(self, index=0): #! needs to work with a filter
+    def prev(self, filterData=None, index=0):
         """
-        Gets the previous connected element of the selection at the given index.
+        Get the immediately prior sibling of each element in the set of matched elements. 
+        If a selector is provided, it retrieves the next sibling only if it matches that selector.
         """
         returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._data:
             connection = self._connection(data, **{"index":index, "mode":"inputs"})
             if connection:
-                returnData.append(connection)
+                filteredData = self._filterData(connection, **filterOptions)
+                if filteredData:
+                    returnData.append(filteredData)
 
         return HouQuery(data=returnData, prevData=self._data)
 
-    def next(self, index=0): #! needs to work with a filter
+    def next(self, filterData=None, index=0):
         """
-        Gets the next connected element of the selection at the given index.
+        Get the immediately following sibling of each element in the set of matched elements. 
+        If a selector is provided, it retrieves the next sibling only if it matches that selector.
         """
         returnData = []
+
+        filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._data:
             connection = self._connection(data, **{"index":index, "mode":"outputs"})
             if connection:
-                returnData.append(connection)
+                filteredData = self._filterData(connection, **filterOptions)
+                if filteredData:
+                    returnData.append(filteredData)
 
         return HouQuery(data=returnData, prevData=self._data)
 
@@ -698,13 +708,6 @@ class HouQuery(SQueryCommon):
         """
         Check the current matched set of elements against a selector, element, or jQuery object and return true 
         if at least one of these elements matches the given arguments
-        """
-        pass
-
-    def _next(self):
-        """
-        Get the immediately following sibling of each element in the set of matched elements. 
-        If a selector is provided, it retrieves the next sibling only if it matches that selector.
         """
         pass
 
