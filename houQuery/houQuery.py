@@ -244,8 +244,8 @@ class HouQuery(SQueryCommon):
 
     def find(self, filterData=None):
         """
-        Get the all the children (including sub) of each element
-        in the set of matched elements, optionally filtered by a selector.
+        Get the all the children (including sub) of each element in the set of matched elements, 
+        optionally filtered by a selector.
         """
         returnData = []
 
@@ -261,8 +261,10 @@ class HouQuery(SQueryCommon):
 
     def filter(self, filterData=None):
         """
-        Reduce the set of matched elements to those that match the selector or pass the function's test.
+        Reduce the set of matched elements to those that match the selector.
         """
+        # documentation continues: or pass the function's test.
+
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
@@ -277,7 +279,7 @@ class HouQuery(SQueryCommon):
     def prev(self, filterData=None, index=0):
         """
         Get the immediately prior sibling of each element in the set of matched elements. 
-        If a selector is provided, it retrieves the next sibling only if it matches that selector.
+        If a selector is provided, it retrieves the prior sibling only if it matches that selector.
         """
         returnData = []
 
@@ -445,6 +447,9 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=self._data)
 
     def setAttr(self, parmName, parmValue, force=False):
+        """
+        Given a parameter and a value, setAttr sets the given parameter to given value
+        """
         if force: #! need to implement a proper force method that would override
             # locked, parameter referenced, keyframed, etc.. parms.
             take = takes.curTake()
@@ -458,6 +463,10 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=self._data)
 
     def replaceAttrValue(self, parmName, parmValue, parmTargetValue):
+        """
+        Given a parameter and a value to change and a value to change to, 
+        replaceAttrValue sets the given value in the given parameter to value to change to
+        """
         for i in self._data:
             parmObject = self._getAttr(i, **{"methods":[
                 {"name":"parm", "args":parmName}
