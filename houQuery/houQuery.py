@@ -25,8 +25,16 @@ class HouQuery(SQueryCommon):
 
     def _init(self, initValue):
         contexts = ["obj", "shop", "out"]
-        if initValue in contexts:
+        msg = "sQuery is initialized in: "
+        if isinstance(initValue, str) and initValue.lower() in contexts:
             self._data = [hou.node("/" + initValue)]
+            print(msg + initValue.title() + " Context")
+        elif isinstance(initValue, hou.Node):
+            self._data = [initValue]
+            print(msg + initValue.path())
+        elif initValue == None:
+            self._data = [hou.node("/obj")]
+            print(msg + "Obj Context")
 
     def _printContent(self, content):
         divider = "*"*72
@@ -159,7 +167,7 @@ class HouQuery(SQueryCommon):
                     filterValue = None
                     filterFunction = self._attrEnds
                     filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
-                elif filterKind == "attrNot": #! not working right now
+                elif filterKind == "attrNot":
                     targetValue = filterValue
                     filterValue = None
                     filterFunction = self._attrNot
@@ -235,7 +243,6 @@ class HouQuery(SQueryCommon):
         return HouQuery(data=returnData, prevData=self._data)
 
     def find(self, filterData=None):
-        #print "\nfunc children"
         """
         Get the all the children (including sub) of each element
         in the set of matched elements, optionally filtered by a selector.
@@ -425,7 +432,6 @@ class HouQuery(SQueryCommon):
         for i in self._data:
             if force: #! temp implementation
                 take.addParm(i.parm(parmName))
-            print parmValue
             self._getAttr(i, **{"methods":[
                      {"name":"parm", "args":parmName}, 
                      {"name":"set", "args":parmValue}
@@ -668,43 +674,43 @@ class HouQuery(SQueryCommon):
 
     def _add(self):
         """
-        Create a new jQuery object with elements added to the set of matched elements.
+        NOT YET IMPLEMENTED - Create a new jQuery object with elements added to the set of matched elements.
         """
         pass
 
     def _addAttr(self):
         """
-        Adds the specified class(es) to each of the set of matched elements.
+        NOT YET IMPLEMENTED - Adds the specified class(es) to each of the set of matched elements.
         """
         pass
 
     def _after(self):
         """
-        Insert content, specified by the parameter, after each element in the set of matched elements.
+        NOT YET IMPLEMENTED - Insert content, specified by the parameter, after each element in the set of matched elements.
         """
         pass
 
     def _attr(self):
         """
-        Get the value of an attribute for the first element in the set of matched elements or set one or more attributes for every matched element.
+        NOT YET IMPLEMENTED - Get the value of an attribute for the first element in the set of matched elements or set one or more attributes for every matched element.
         """
         pass
 
     def _clone(self):
         """
-        Create a deep copy of the set of matched elements.
+        NOT YET IMPLEMENTED - Create a deep copy of the set of matched elements.
         """
         pass
 
     def _empty(self):
         """
-        Remove all child nodes of the set of matched elements from the DOM.
+        NOT YET IMPLEMENTED - Remove all child nodes of the set of matched elements from the DOM.
         """
         pass
 
     def _first(self):
         """
-        Reduce the set of matched elements to the first in the set.
+        NOT YET IMPLEMENTED - Reduce the set of matched elements to the first in the set.
         """
         pass
 
@@ -715,20 +721,20 @@ class HouQuery(SQueryCommon):
         pass
 
     def _hide(self):
-        """!
-        Hide the matched elements.
+        """
+        NOT YET IMPLEMENTED - Hide the matched elements.
         """
         pass
 
     def _is(self):
         """
-        Check the current matched set of elements against a selector, element, or jQuery object and return true 
+        NOT YET IMPLEMENTED - Check the current matched set of elements against a selector, element, or jQuery object and return true 
         if at least one of these elements matches the given arguments
         """
         pass
 
     def _nextAll(self):
         """
-        Get all following siblings of each element in the set of matched elements, optionally filtered by a selector.
+        NOT YET IMPLEMENTED - Get all following siblings of each element in the set of matched elements, optionally filtered by a selector.
         """
         pass

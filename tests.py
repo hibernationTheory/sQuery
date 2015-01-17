@@ -368,6 +368,16 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(parmDataSq, parmData)
 
+	def test_initialization_in_an_object(self):
+		selData = []
+		objPath = "/obj"
+		pointlight4Address = objPath + "/pointlight4"
+		pointlight4 = hou.node(pointlight4Address)
+		selData.append(pointlight4)
+
+		sel = sQuery.sQuery(pointlight4)
+		self.assertListEqual(sel._data, selData)
+
 
 	""" yet to be implemented - multiple selections
 	def test_is_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):
