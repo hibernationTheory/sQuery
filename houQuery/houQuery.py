@@ -92,9 +92,11 @@ class HouQuery(SQueryCommon):
         filterFunction = None
         filterFunctionKwargs = {}
         callback = None
-        callbackKwargs = None
+        callbackKwargs = {}
         filterKind = None
         filterValue = None
+        postFilterFunction = None
+        postFilterFunctionKwargs = {}
 
         if filterData:
             if isinstance(filterData, dict):
@@ -128,11 +130,11 @@ class HouQuery(SQueryCommon):
 
             if filterKind:
                 if filterKind == "type":
-                    callback = self._getAttr
-                    callbackKwargs = {"methods":["type", "name"]}
+                    filterFunction = self._getAttr
+                    filterFunctionKwargs = {"methods":["type", "name"]}
                 elif filterKind == "name":
-                    callbackKwargs = {"methods":["name"]}
-                    callback = self._getAttr
+                    filterFunctionKwargs = {"methods":["name"]}
+                    filterFunction = self._getAttr
                 #attribute related filters
                 elif filterKind == "attr":
                     callbackKwargs = {"methods":[{"name":"parm", "args":filterName}]}
@@ -156,7 +158,7 @@ class HouQuery(SQueryCommon):
                     filterValue = None
                     filterFunction = self._attrEnds
                     filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
-                elif filterKind == "attrNot":
+                elif filterKind == "attrNot": #! not working right now
                     targetValue = filterValue
                     filterValue = None
                     filterFunction = self._attrNot
@@ -164,14 +166,16 @@ class HouQuery(SQueryCommon):
 
         if filterKind =="name" or filterKind =="type":
             if filterName.find("*") != -1:
-                filterFunction = self._fnMatch
-                filterFunctionKwargs = {"pattern":filterName, "callback":self._getAttr, "callbackKwargs":callbackKwargs}
+                postFilterFunction = self._fnMatch
+                postFilterFunctionKwargs = {"pattern":filterName}
                 filterValue = True
 
         filterReturnData = {
             "filterName":filterName,
             "filterFunction":filterFunction,
             "filterFunctionKwargs":filterFunctionKwargs,
+            "postFilterFunction":postFilterFunction,
+            "postFilterFunctionKwargs":postFilterFunctionKwargs,
             "callback":callback,
             "callbackKwargs":callbackKwargs,
             "filterValue":filterValue,

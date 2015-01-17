@@ -89,6 +89,8 @@ class SQueryCommon(object):
         filterValue = kwargs.get("filterValue", None)
         filterFunction = kwargs.get("filterFunction", None)
         filterFunctionKwargs = kwargs.get("filterFunctionKwargs", {})
+        postFilterFunction = kwargs.get("postFilterFunction", None)
+        postFilterFunctionKwargs = kwargs.get("postFilterFunctionKwargs", None)
 
         if callback:
             result = callback(data, **callbackKwargs)
@@ -97,11 +99,19 @@ class SQueryCommon(object):
 
         if filterFunction and filterValue:
             filterResult = filterFunction(data, **filterFunctionKwargs)
+            if postFilterFunction:
+                postResult = postFilterFunction(filterResult, **postFilterFunctionKwargs)
+                if postResult:
+                    return data
             if filterResult == filterValue:
                 return data
 
         elif filterFunction and not filterValue:
             filterResult = filterFunction(data, **filterFunctionKwargs)
+            if postFilterFunction:
+                postResult = postFilterFunction(filterResult, **postFilterFunctionKwargs)
+                if postResult:
+                    return data
             if filterResult:
                 return data
 
