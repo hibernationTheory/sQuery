@@ -101,3 +101,7 @@ These are the methods that you can use to perform various operations optionally 
 - createNodeAfter
 - createNodeBefore
 
+###Known Issues
+- Houdini Native Methods will return None when run and hence will break the chaining, best to have them as last methods to run
+- Setting expressions using setAttr is problematic
+- setAttr is not tested on locked, keyframed, etc... attributes.
