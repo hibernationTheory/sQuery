@@ -36,14 +36,6 @@ class HouQuery(SQueryCommon):
             self._data = [hou.node("/obj")]
             print(msg + "Obj Context")
 
-    def get(self, index=None):
-        """
-        Retrieve the elements matched by the sQuery object.
-        """
-        if index != None:
-            return self._data[index]
-        return self._data
-
     def _printContent(self, content):
         divider = "*"*72
         print divider
@@ -53,6 +45,14 @@ class HouQuery(SQueryCommon):
         else:
             print "EMPTY"
         print divider
+
+    def get(self, index=None):
+        """
+        Retrieve the elements matched by the sQuery object.
+        """
+        if index != None:
+            return self._data[index]
+        return self._data
 
     def _parseAttributeFilterSyntax(self, filterData):
         if not filterData.startswith("[") and not filterData.endswith("]"):
@@ -609,6 +609,10 @@ class HouQuery(SQueryCommon):
         self._getAttrMultiple(self._data, **{"methods":
                 [{"name":methodName, "args":args, "kwargs":kwargs}]})
         return HouQuery(data=self._data)
+
+    @sq.methodName
+    def allowEditingOfContents(self, *args, **kwargs):
+        return self._callAttrWithMethodName(*args, **kwargs)
 
     @sq.methodName
     def setName(self, *args, **kwargs):
