@@ -36,6 +36,14 @@ class HouQuery(SQueryCommon):
             self._data = [hou.node("/obj")]
             print(msg + "Obj Context")
 
+    def get(self, index=None):
+        """
+        Retrieve the elements matched by the sQuery object.
+        """
+        if index != None:
+            return self._data[index]
+        return self._data
+
     def _printContent(self, content):
         divider = "*"*72
         print divider

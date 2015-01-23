@@ -15,14 +15,6 @@ class HouTests(unittest.TestCase):
 		sq = sQuery.sQuery("out")
 		self.assertEqual(sq._data[0], hou.node("/out"))
 
-	"""
-	def test_isBoxSelected(self): #! TO BE IMPLEMENTED
-		boxPath = "/obj/box"
-		box = hou.node(boxPath)
-		sq = sQuery.sQuery(box)
-		self.assertEqual(sq._data[0], box)
-	"""
-
 	def test_is_child_with_name_box_selected(self):
 		boxPath = "/obj/box"
 		box = hou.node(boxPath)
@@ -54,6 +46,30 @@ class HouTests(unittest.TestCase):
 		sel = sq.children("t#*ge* t#*li*")
 
 		self.assertListEqual(sel._data, selData)
+
+	def test_get_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.type().name().find("ge") != -1 or i.type().name().find("li") != -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("t#*ge* t#*li*")
+
+		self.assertListEqual(sel.get(), selData)
+
+	def test_get_first_child_with_type_name_has_ge_and_type_name_has_li_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.type().name().find("ge") != -1 or i.type().name().find("li") != -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("t#*ge* t#*li*")
+
+		self.assertEqual(sel.get(0), selData[0])
 
 	def test_is_all_children_with_matching_name_box_selected(self):
 		selData = []
