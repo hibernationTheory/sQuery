@@ -260,6 +260,38 @@ class HouQuery(SQueryCommon):
 
         return HouQuery(data=returnData, prevData=self._data)
 
+    def hasChildren(self, filterData=None):
+        """
+        Reduce the set of matched elements to those that have a direct descendant that matches the selector.
+        """ # or DOM element
+        returnData = set()
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._data:
+            for child in data.children():
+                filteredData = self._filterDataMultiple(child, filterOptions)
+                if filteredData:
+                    returnData.add(data)
+
+        return HouQuery(data=list(returnData), prevData=self._data)
+
+    def hasSubChildren(self, filterData=None):
+        """
+        Reduce the set of matched elements to those that have a descendant that matches the selector.
+        """ # or DOM element
+        returnData = set()
+
+        filterOptions = self._generateFilterOptions(filterData)
+
+        for data in self._data:
+            for child in data.allSubChildren():
+                filteredData = self._filterDataMultiple(child, filterOptions)
+                if filteredData:
+                    returnData.add(data)
+
+        return HouQuery(data=list(returnData), prevData=self._data)
+
     def find(self, filterData=None):
         """
         Get the all the children (including sub) of each element in the set of matched elements, 

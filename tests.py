@@ -517,6 +517,9 @@ class HouTests(unittest.TestCase):
 		self.assertListEqual(getSelectedSq, getSelected)
 
 	def test_select_box1_from_viewport_selection(self):
+		for i in hou.selectedNodes():
+			i.setSelected(False)
+			
 		selData = []
 		objPath = "/obj"
 		for i in hou.node(objPath).children():
@@ -534,7 +537,6 @@ class HouTests(unittest.TestCase):
 		self.assertListEqual(sel._data, selected)
 
 	def test_select_box1_from_bundle_box_content(self):
-
 		selData = []
 		targetBundle = hou.nodeBundle("box_bundle")
 		nodes = targetBundle.nodes()
@@ -546,6 +548,33 @@ class HouTests(unittest.TestCase):
 		sel = sq.bundle("box_bundle").filter("*box1*")
 
 		self.assertListEqual(sel._data, selData)
+
+	def test_select_children_that_has_type_switch_children(self):
+		selData = set()
+		objPath = "/obj"
+		for node in hou.node(objPath).children():
+			for child in node.children():
+				if child.type().name().find("switch") != -1:
+					selData.add(node)
+
+		sq = sQuery.sQuery()
+		sel = sq.children().hasChildren("t#*switch*")
+
+		self.assertListEqual(sel._data, list(selData))
+
+	def test_select_children_that_has_type_facet_subchildren(self):
+		selData = set()
+		objPath = "/obj"
+		for node in hou.node(objPath).children():
+			for child in node.allSubChildren():
+				if child.type().name().find("facet") != -1:
+					selData.add(node)
+
+		sq = sQuery.sQuery()
+		sel = sq.children().hasSubChildren("t#*facet*")
+
+		self.assertListEqual(sel._data, list(selData))
+
 
 def main(): #! unittest.main() doesn't work for some reason
 	suite = unittest.defaultTestLoader.loadTestsFromTestCase(HouTests)

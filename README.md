@@ -85,6 +85,8 @@ These are the methods that you can use to perform various operations optionally 
 - next
 - parent
 - siblings
+- hasChildren
+- hasSubChildren
 
 ###Selection Methods that don't work with selectors
 - selection
