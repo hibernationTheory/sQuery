@@ -41,6 +41,12 @@ sq.children("[shop_materialpath~=constant]") # gets all the children nodes with 
 sq.children("[shop_materialpath$=constant]") # gets all the children nodes with the attribute shop_materialpath ends with the word constant.
 sq.children("[shop_materialpath^=constant]") # gets all the children nodes with the attribute shop_materialpath starts with the word constant.
 sq.children("[shop_materialpath!=constant]") # gets all the children nodes with the attribute shop_materialpath doesn't contain the word constant
+
+# you can also do multiple selections by leaving a space in between selectors
+
+sq.children("t#geo t#*light*") 
+#get all children that are of type geo or those with type matching to *light*
+
 ```
 
 - Here is an example to a more complex operation you can perform using various methods of the API.

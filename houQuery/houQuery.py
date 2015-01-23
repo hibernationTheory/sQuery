@@ -91,7 +91,7 @@ class HouQuery(SQueryCommon):
 
         return {"filterParmName":filterParmName, "filterParmValue":filterParmValue}
 
-    def _generateFilterOptions(self, filterData=None):
+    def _generateFilterOptions(self, filterDataInput=None):
         """
         Generates the options that are going to be required by filtering operations based on given data
         """
@@ -105,19 +105,26 @@ class HouQuery(SQueryCommon):
         filterValue = None
         postFilterFunction = None
         postFilterFunctionKwargs = {}
+        filters = []
 
-        if filterData:
-            if isinstance(filterData, dict):
-                if filterData.get("type", None):
-                    filterKind = "type"
-                    filterName = filterData[filterKind]
-                    filterValue = filterName
-                elif filterData.get("name", None):
-                    filterKind = "name"
-                    filterName = filterData[filterKind]
-                    filterValue = filterName
+        filterReturnData = {
+            "filterName":filterName,
+            "filterFunction":filterFunction,
+            "filterFunctionKwargs":filterFunctionKwargs,
+            "postFilterFunction":postFilterFunction,
+            "postFilterFunctionKwargs":postFilterFunctionKwargs,
+            "callback":callback,
+            "callbackKwargs":callbackKwargs,
+            "filterValue":filterValue,
+        }
 
-            elif isinstance(filterData, str):
+        if filterDataInput == None:
+            filters.append(filterReturnData)
+            return filters
+
+        if filterDataInput and isinstance(filterDataInput, str):
+            filterDataInput = filterDataInput.split(" ")
+            for filterData in filterDataInput:
                 if filterData.startswith("t#"):
                     filterKind = "type"
                     filterName = filterData[2:]
@@ -136,61 +143,63 @@ class HouQuery(SQueryCommon):
                     filterName = filterData
                     filterValue = filterName
 
-            if filterKind:
-                if filterKind == "type":
-                    filterFunction = self._getAttr
-                    filterFunctionKwargs = {"methods":["type", "name"]}
-                elif filterKind == "name":
-                    filterFunctionKwargs = {"methods":["name"]}
-                    filterFunction = self._getAttr
-                #attribute related filters
-                elif filterKind == "attr":
-                    filterFunction = self._getAttr
-                    filterFunctionKwargs =  {"methods":[{"name":"parm", "args":filterName}]}
-                elif filterKind == "attrValue":
-                    targetValue = filterValue
-                    filterValue = None
-                    filterFunction = self._attrIs
-                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
-                elif filterKind == "attrContains":
-                    targetValue = filterValue
-                    filterValue = None
-                    filterFunction = self._attrContains
-                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
-                elif filterKind == "attrStarts":
-                    targetValue = filterValue
-                    filterValue = None
-                    filterFunction = self._attrStarts
-                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
-                elif filterKind == "attrEnds":
-                    targetValue = filterValue
-                    filterValue = None
-                    filterFunction = self._attrEnds
-                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
-                elif filterKind == "attrNot":
-                    targetValue = filterValue
-                    filterValue = None
-                    filterFunction = self._attrNot
-                    filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                if filterKind:
+                    if filterKind == "type":
+                        filterFunction = self._getAttr
+                        filterFunctionKwargs = {"methods":["type", "name"]}
+                    elif filterKind == "name":
+                        filterFunctionKwargs = {"methods":["name"]}
+                        filterFunction = self._getAttr
+                    #attribute related filters
+                    elif filterKind == "attr":
+                        filterFunction = self._getAttr
+                        filterFunctionKwargs =  {"methods":[{"name":"parm", "args":filterName}]}
+                    elif filterKind == "attrValue":
+                        targetValue = filterValue
+                        filterValue = None
+                        filterFunction = self._attrIs
+                        filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                    elif filterKind == "attrContains":
+                        targetValue = filterValue
+                        filterValue = None
+                        filterFunction = self._attrContains
+                        filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                    elif filterKind == "attrStarts":
+                        targetValue = filterValue
+                        filterValue = None
+                        filterFunction = self._attrStarts
+                        filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                    elif filterKind == "attrEnds":
+                        targetValue = filterValue
+                        filterValue = None
+                        filterFunction = self._attrEnds
+                        filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
+                    elif filterKind == "attrNot":
+                        targetValue = filterValue
+                        filterValue = None
+                        filterFunction = self._attrNot
+                        filterFunctionKwargs = {"methods":[{"name":"parm", "args":filterName}, {"name":"evalAsString"}], "targetValue":targetValue, "targetParm":filterName}
 
-        if filterKind =="name" or filterKind =="type":
-            if filterName.find("*") != -1:
-                postFilterFunction = self._fnMatch
-                postFilterFunctionKwargs = {"pattern":filterName}
-                filterValue = True
+                if filterKind =="name" or filterKind =="type":
+                    if filterName.find("*") != -1:
+                        postFilterFunction = self._fnMatch
+                        postFilterFunctionKwargs = {"pattern":filterName}
+                        filterValue = True
 
-        filterReturnData = {
-            "filterName":filterName,
-            "filterFunction":filterFunction,
-            "filterFunctionKwargs":filterFunctionKwargs,
-            "postFilterFunction":postFilterFunction,
-            "postFilterFunctionKwargs":postFilterFunctionKwargs,
-            "callback":callback,
-            "callbackKwargs":callbackKwargs,
-            "filterValue":filterValue,
-        }
+                filterReturnData = {
+                    "filterName":filterName,
+                    "filterFunction":filterFunction,
+                    "filterFunctionKwargs":filterFunctionKwargs,
+                    "postFilterFunction":postFilterFunction,
+                    "postFilterFunctionKwargs":postFilterFunctionKwargs,
+                    "callback":callback,
+                    "callbackKwargs":callbackKwargs,
+                    "filterValue":filterValue,
+                }
 
-        return filterReturnData
+                filters.append(filterReturnData)
+
+        return filters
 
     def addBack(self, filterData=None):
         """
@@ -201,7 +210,7 @@ class HouQuery(SQueryCommon):
         filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._prevData:
-            filteredData = self._filterData(data, **filterOptions)
+            filteredData = self._filterDataMultiple(data, filterOptions)
             if filteredData:
                 if filteredData not in self._data:
                     returnData.append(filteredData)
@@ -219,7 +228,7 @@ class HouQuery(SQueryCommon):
         filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._data:
-            filteredData = self._filterData(data, **filterOptions)
+            filteredData = self._filterDataMultiple(data, filterOptions)
             if not filteredData:
                 returnData.append(data)
 
@@ -233,10 +242,11 @@ class HouQuery(SQueryCommon):
         returnData = []
 
         filterOptions = self._generateFilterOptions(filterData)
+        print filterOptions
 
         for data in self._data:
             for child in data.children():
-                filteredData = self._filterData(child, **filterOptions)
+                filteredData = self._filterDataMultiple(child, filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
 
@@ -253,7 +263,7 @@ class HouQuery(SQueryCommon):
 
         for data in self._data:
             for child in data.allSubChildren():
-                filteredData = self._filterData(child, **filterOptions)
+                filteredData = self._filterDataMultiple(child, filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
 
@@ -270,7 +280,7 @@ class HouQuery(SQueryCommon):
         filterOptions = self._generateFilterOptions(filterData)
 
         for data in self._data:
-            filteredData = self._filterData(data, **filterOptions)
+            filteredData = self._filterDataMultiple(data, filterOptions)
             if filteredData:
                 returnData.append(filteredData)
 
@@ -288,7 +298,7 @@ class HouQuery(SQueryCommon):
         for data in self._data:
             connection = self._connection(data, **{"index":index, "mode":"inputs"})
             if connection:
-                filteredData = self._filterData(connection, **filterOptions)
+                filteredData = self._filterDataMultiple(connection, filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
 
@@ -306,7 +316,7 @@ class HouQuery(SQueryCommon):
         for data in self._data:
             connection = self._connection(data, **{"index":index, "mode":"outputs"})
             if connection:
-                filteredData = self._filterData(connection, **filterOptions)
+                filteredData = self._filterDataMultiple(connection, filterOptions)
                 if filteredData:
                     returnData.append(filteredData)
 
@@ -323,7 +333,7 @@ class HouQuery(SQueryCommon):
 
         for data in self._data:
             parent = data.parent()
-            filteredData = self._filterData(parent, **filterOptions)
+            filteredData = self._filterDataMultiple(parent, filterOptions)
             if filteredData and filteredData.path() not in pathData: 
             #! do I need to perform this check for other methods as well to prevent data duplication? 
                 returnData.append(filteredData)
@@ -344,7 +354,7 @@ class HouQuery(SQueryCommon):
             parent = data.parent()
             siblings = parent.children()
             for sibling in siblings:
-                filteredData = self._filterData(sibling, **filterOptions)
+                filteredData = self._filterDataMultiple(sibling, filterOptions)
                 if filteredData and filteredData.path() not in pathData: 
                     #! do I need to perform this check for other methods as well to prevent data duplication? 
                     returnData.append(filteredData)
@@ -494,7 +504,7 @@ class HouQuery(SQueryCommon):
 
     def addToBundle(self, bundleName):
         for data in self._data:
-            filteredData = self._filterData(data, **{
+            filteredData = self._filterDataMultiple(data, **{
                 "callback":self._addNodeToBundle,
                 "callbackKwargs":{"bundleName":bundleName},
                 })
@@ -503,7 +513,7 @@ class HouQuery(SQueryCommon):
 
     def removeFromBundle(self, bundleName):
         for data in self._data:
-            filteredData = self._filterData(data, **{
+            filteredData = self._filterDataMultiple(data, **{
                 "callback":self._removeNodeFromBundle,
                 "callbackKwargs":{"bundleName":bundleName},
                 })
@@ -607,7 +617,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterData(i, **{
+            filteredData = self._filterDataMultiple(i, **{
             "callback":self._createNodeInsideParent,
             "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
             })
@@ -620,7 +630,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterData(i, **{
+            filteredData = self._filterDataMultiple(i, **{
                 "callback":self._createNodeAfterGivenNode,
                 "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
                 })
@@ -633,7 +643,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterData(i, **{
+            filteredData = self._filterDataMultiple(i, **{
                 "callback":self._createNodeBeforeGivenNode,
                 "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
                 })

@@ -32,6 +32,17 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(sel._data, [box])
 
+	def test_is_child_with_name_box_and_box1_selected(self):
+		boxPath = "/obj/box"
+		box = hou.node(boxPath)
+		box1 = hou.node(boxPath + "1")
+		boxes = [box, box1]
+
+		sq = sQuery.sQuery()
+		sel = sq.children("box box1")
+
+		self.assertListEqual(sel._data, boxes)
+
 	def test_is_all_children_with_matching_name_box_selected(self):
 		selData = []
 		objPath = "/obj"
@@ -44,6 +55,18 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(sel._data, selData)
 
+	def test_is_all_children_with_matching_name_box_and_matching_name_sphere_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.name().find("box") != -1 or i.name().find("sphere") != -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("*box* *sphere*")
+
+		self.assertListEqual(sel._data, selData)
+
 	def test_is_all_children_with_name_has_box_and_type_geo_selected(self):
 		selData = []
 		objPath = "/obj"
@@ -53,6 +76,18 @@ class HouTests(unittest.TestCase):
 
 		sq = sQuery.sQuery()
 		sel = sq.children("*box*").filter("t#geo")
+
+		self.assertListEqual(sel._data, selData)
+
+	def test_is_all_children_type_geo_and_name_has_box_or_sphere_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if (i.name().find("box") != -1 or i.name().find("sphere") != -1) and i.type().name() == "geo":
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("*box* *sphere*").filter("t#geo")
 
 		self.assertListEqual(sel._data, selData)
 
@@ -80,6 +115,18 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(sel._data, selData)
 
+	def test_is_all_children_with_type_name_has_ge_or_has_li_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.type().name().find("ge") != -1 or i.type().name().find("li") != -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("t#*ge* t#*li*")
+
+		self.assertListEqual(sel._data, selData)
+
 	def test_is_all_children_with_attribute_light_intensity_selected(self):
 		selData = []
 		objPath = "/obj"
@@ -89,6 +136,18 @@ class HouTests(unittest.TestCase):
 
 		sq = sQuery.sQuery()
 		sel = sq.children("[light_intensity]")
+
+		self.assertListEqual(sel._data, selData)
+
+	def test_is_all_children_with_attribute_light_intensity_or_scale_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.parm("light_intensity") or i.parm("scale"):
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("[light_intensity] [scale]")
 
 		self.assertListEqual(sel._data, selData)
 
@@ -131,6 +190,19 @@ class HouTests(unittest.TestCase):
 
 		sq = sQuery.sQuery()
 		sel = sq.children("[tx=10]").filter("t#*light*")
+
+		self.assertListEqual(sel._data, selData)
+
+	def test_is_all_children_with_type_name_has_light_or_has_tx_10_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			parm = i.parm("tx")
+			if parm and (i.type().name().find("light") != -1 or parm.eval() == 10):
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("[tx=10] t#*light*")
 
 		self.assertListEqual(sel._data, selData)
 

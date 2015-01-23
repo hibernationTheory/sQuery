@@ -85,6 +85,13 @@ class SQueryCommon(object):
 
         return result
 
+    def _filterDataMultiple(self, data, filterMultipleOptions):
+        for option in filterMultipleOptions:
+            result = self._filterData(data, **option)
+            if result != None:
+                return result
+        return None
+
     def _filterData(self, data, **kwargs):
         # filters the given scene object using the kwargs parameters
         callback = kwargs.get("callback", None)
