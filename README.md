@@ -113,6 +113,10 @@ These are the methods that you can use to perform various operations optionally 
 - createNodeAfter
 - createNodeBefore
 
+###Operations on the sQuery object
+- get
+- each
+
 ###Known Issues
 - Houdini Native Methods will return None when run and hence will break the chaining, best to have them as last methods to run
 - Setting expressions using setAttr is problematic

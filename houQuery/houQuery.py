@@ -54,6 +54,18 @@ class HouQuery(SQueryCommon):
             return self._data[index]
         return self._data
 
+    def each(self, fn, feedback=True):
+        """
+        EXPERIMENTAL - Iterate over a sQuery object, executing a function for each matched element.
+        """
+        for elem in enumerate(self._data):
+            if feedback:
+                kwargs = {"index":elem[0], "element":elem[1]}
+                fn(**kwargs)
+            else:
+                fn(elem[1])
+        return HouQuery(data=self._data)
+
     def _parseAttributeFilterSyntax(self, filterData):
         if not filterData.startswith("[") and not filterData.endswith("]"):
             return None
