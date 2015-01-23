@@ -361,7 +361,20 @@ class HouQuery(SQueryCommon):
                     pathData.append(filteredData.path())
 
         return HouQuery(data=returnData, prevData=self._data)
-        
+
+    def selection(self):
+        """
+        EXPERIMENTAL - Get the current selection
+        """
+        returnData = [i for i in hou.selectedNodes()]
+        return HouQuery(data=returnData, prevData=self._data)
+
+    def bundle(self, bundleName):
+        """
+        EXPERIMENTAL - Get the contents of the given bundle.
+        """
+        returnData = self._returnBundleContent(bundleName)
+        return HouQuery(data=returnData, prevData=self._data)
 
     def _connection(self, node, **kwargs):
         """
@@ -502,6 +515,15 @@ class HouQuery(SQueryCommon):
             return True
         else: return False
 
+    def _returnBundleContent(self, value):
+        """given the string value, returns the contents of the bundle with the corresponding name"""
+        targetBundle = hou.nodeBundle(value)
+        if targetBundle:
+            nodes = targetBundle.nodes()
+            return nodes
+        else:
+            return []
+
     def addToBundle(self, bundleName):
         for data in self._data:
             filteredData = self._filterDataMultiple(data, **{
@@ -624,7 +646,7 @@ class HouQuery(SQueryCommon):
             if filteredData:
                 returnData.append(filteredData)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
     def createNodeAfter(self, typeName, nodeParms=None):
 
@@ -637,7 +659,7 @@ class HouQuery(SQueryCommon):
             if filteredData:
                 returnData.append(filteredData)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
     def createNodeBefore(self, typeName, nodeParms=None):
 
@@ -650,7 +672,7 @@ class HouQuery(SQueryCommon):
             if filteredData:
                 returnData.append(filteredData)
 
-        return HouQuery(data=returnData)
+        return HouQuery(data=returnData, prevData=self._data)
 
     def _createNodeInsideParent(self, parent, **kwargs):
         typeName = kwargs.get("typeName", None)
@@ -729,6 +751,10 @@ class HouQuery(SQueryCommon):
             parent.layoutChildren()
 
         return False
+
+    ################################
+    # Misc
+    ################################
 
     ################################
     # Below are from the jQuery API

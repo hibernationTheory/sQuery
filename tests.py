@@ -43,6 +43,18 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(sel._data, boxes)
 
+	def test_is_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):
+		selData = []
+		objPath = "/obj"
+		for i in hou.node(objPath).children():
+			if i.type().name().find("ge") != -1 or i.type().name().find("li") != -1:
+				selData.append(i)
+
+		sq = sQuery.sQuery()
+		sel = sq.children("t#*ge* t#*li*")
+
+		self.assertListEqual(sel._data, selData)
+
 	def test_is_all_children_with_matching_name_box_selected(self):
 		selData = []
 		objPath = "/obj"
@@ -488,20 +500,36 @@ class HouTests(unittest.TestCase):
 
 		self.assertListEqual(getSelectedSq, getSelected)
 
-
-	""" yet to be implemented - multiple selections
-	def test_is_all_children_with_type_name_has_ge_and_type_name_has_li_selected(self):
+	def test_select_box1_from_viewport_selection(self):
 		selData = []
 		objPath = "/obj"
 		for i in hou.node(objPath).children():
-			if i.type().name().find("ge") != -1 and i.type().name().find("li") != -1:
+			if i.name().find("box1") != -1 or i.name().find("box2") !=-1 or i.name().find("box3") != -1:
+				i.setSelected(True)
+
+		selected = list(hou.selectedNodes())
+
+		sq = sQuery.sQuery()
+		sel = sq.selection().filter("*box*")
+
+		for i in selected:
+			i.setSelected(False)
+
+		self.assertListEqual(sel._data, selected)
+
+	def test_select_box1_from_bundle_box_content(self):
+
+		selData = []
+		targetBundle = hou.nodeBundle("box_bundle")
+		nodes = targetBundle.nodes()
+		for i in nodes:
+			if i.name().find("box1") != -1:
 				selData.append(i)
 
 		sq = sQuery.sQuery()
-		sel = sq.children("t#*ge*")
+		sel = sq.bundle("box_bundle").filter("*box1*")
 
 		self.assertListEqual(sel._data, selData)
-	"""
 
 def main(): #! unittest.main() doesn't work for some reason
 	suite = unittest.defaultTestLoader.loadTestsFromTestCase(HouTests)

@@ -86,6 +86,10 @@ These are the methods that you can use to perform various operations optionally 
 - parent
 - siblings
 
+###Selection Methods that don't work with selectors
+- selection
+- bundle
+
 ###Attribute Related Methods
 - setAttr
 - replaceAttrValue
