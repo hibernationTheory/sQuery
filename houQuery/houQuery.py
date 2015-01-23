@@ -578,7 +578,7 @@ class HouQuery(SQueryCommon):
 
     def addToBundle(self, bundleName):
         for data in self._data:
-            filteredData = self._filterDataMultiple(data, **{
+            filteredData = self._filterData(data, **{
                 "callback":self._addNodeToBundle,
                 "callbackKwargs":{"bundleName":bundleName},
                 })
@@ -587,7 +587,7 @@ class HouQuery(SQueryCommon):
 
     def removeFromBundle(self, bundleName):
         for data in self._data:
-            filteredData = self._filterDataMultiple(data, **{
+            filteredData = self._filterData(data, **{
                 "callback":self._removeNodeFromBundle,
                 "callbackKwargs":{"bundleName":bundleName},
                 })
@@ -695,7 +695,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterDataMultiple(i, **{
+            filteredData = self._filterData(i, **{
             "callback":self._createNodeInsideParent,
             "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
             })
@@ -708,7 +708,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterDataMultiple(i, **{
+            filteredData = self._filterData(i, **{
                 "callback":self._createNodeAfterGivenNode,
                 "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
                 })
@@ -721,7 +721,7 @@ class HouQuery(SQueryCommon):
 
         returnData = []
         for i in self._data:
-            filteredData = self._filterDataMultiple(i, **{
+            filteredData = self._filterData(i, **{
                 "callback":self._createNodeBeforeGivenNode,
                 "callbackKwargs":{"typeName":typeName, "parms":nodeParms},
                 })
