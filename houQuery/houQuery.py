@@ -24,8 +24,8 @@ class HouQuery(SQueryCommon):
             "allowEditingOfContents":self._callAttrWithMethodName,
             "cook":self._callAttrWithMethodName,
             "collapseIntoSubnet":self._callAttrWithMethodName,
-            "matchCurrentDefinition":self._callAttrWithMethodName,
             "destroyUserData":self._callAttrWithMethodName,
+            "matchCurrentDefinition":self._callAttrWithMethodName,
             "setDisplayFlag":self._callAttrWithMethodName,
             "setName":self._callAttrWithMethodName,
             "setRenderFlag":self._callAttrWithMethodName,
@@ -640,6 +640,16 @@ class HouQuery(SQueryCommon):
     # NODE STATE
     #################
 
+    def _callAttrWithMethodName(self, *args, **kwargs):
+        # deleting the _sQueryMethodName that comes from the decorator
+        # to have it not passed to underlying Hou objects
+        methodName = args[0]
+        otherArgs = args[1:]
+
+        self._getAttrMultiple(self._data, **{"methods":
+                [{"name":methodName, "args":otherArgs, "kwargs":kwargs}]})
+        return HouQuery(data=self._data)
+
     def select(self, type="replace"):
         """
         Convenience method for the setSelected(True)
@@ -672,30 +682,24 @@ class HouQuery(SQueryCommon):
         """
         return self.setDisplayFlag(False)
 
-    def _callAttrWithMethodName(self, *args, **kwargs):
-        # deleting the _sQueryMethodName that comes from the decorator
-        # to have it not passed to underlying Hou objects
-        methodName = args[0]
-        otherArgs = args[1:]
+    def move(self, *args):
+        """
+        Convenience method for hou.Node.move()
+        """
+        if not args:
+            return HouQuery(data=returnData, prevData=self._data)
+        if len(args) == 1:
+            pos = hou.Vector2(args[0],0)
+        if len(args) > 1:
+            pos = hou.Vector2(args[0], args[1])
+        args = self.unshiftTuple("move", (pos,))
+        return self._callAttrWithMethodName(*args)
 
-        self._getAttrMultiple(self._data, **{"methods":
-                [{"name":methodName, "args":otherArgs, "kwargs":kwargs}]})
-        return HouQuery(data=self._data)
 
     def destroy(self, *args, **kwargs):
         args = self.unshiftTuple("destroy", args)
         self._callAttrWithMethodName(*args, **kwargs)
         return HouQuery(data=None)
-
-    def unshiftTuple(self, name, givenTuple):
-        content = list(givenTuple)
-        newContent = []
-        for index in range(len(content)+1):
-            if index == 0:
-                newContent.append(name)
-            else:
-                newContent.append(content[index-1])
-        return tuple(newContent)
 
     #################
     # NODE CREATION / DELETION
@@ -819,8 +823,18 @@ class HouQuery(SQueryCommon):
         return False
 
     ################################
-    # Misc
+    # Misc / Helper
     ################################
+
+    def unshiftTuple(self, name, givenTuple):
+        content = list(givenTuple)
+        newContent = []
+        for index in range(len(content)+1):
+            if index == 0:
+                newContent.append(name)
+            else:
+                newContent.append(content[index-1])
+        return tuple(newContent)
 
     ################################
     # Below are from the jQuery API
@@ -871,12 +885,6 @@ class HouQuery(SQueryCommon):
     def _has(self):
         """
         Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
-        """
-        pass
-
-    def _hide(self):
-        """
-        NOT YET IMPLEMENTED - Hide the matched elements.
         """
         pass
 

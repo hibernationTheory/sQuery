@@ -98,13 +98,18 @@ These are the methods that you can use to perform various operations optionally 
 - toggle
 
 ###Supported Houdini Native Methods
-- setName
+- allowEditingOfContents
+- cook
+- coolapseIntoSubnet
+- destroy
+- destroyUserData
+- matchCurrentDefinition
+- move
 - setDisplayFlag
+- setName
 - setRenderFlag
 - setSelected
 - setUserData
-- destroyUserData
-- destroy
 
 ###Other Scene Operations
 - addToBundle
