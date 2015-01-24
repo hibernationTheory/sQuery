@@ -105,6 +105,7 @@ These are the methods that you can use to perform various operations optionally 
 - destroyUserData
 - matchCurrentDefinition
 - move
+- setColor
 - setDisplayFlag
 - setName
 - setRenderFlag

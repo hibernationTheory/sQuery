@@ -695,6 +695,45 @@ class HouQuery(SQueryCommon):
         args = self.unshiftTuple("move", (pos,))
         return self._callAttrWithMethodName(*args)
 
+    def setColor(self, *args):
+        """
+        Convenience method for hou.Node.setColor()
+        """
+        if not args:
+            return HouQuery(data=returnData, prevData=self._data)
+        if len(args) == 1:
+            arg = args[0]
+            if not isinstance(arg, str):
+                return HouQuery(data=returnData, prevData=self._data)
+            if arg == "red":
+                color = hou.Color((1,0,0))
+            elif arg == "green":
+                color = hou.Color((0,1,0))
+            elif arg == "blue":
+                color = hou.Color((0,0,1))
+            elif arg == "yellow":
+                color = hou.Color((1,1,0))
+            elif arg == "magenta":
+                color = hou.Color((1,1,0))
+            elif arg == "cyan":
+                color = hou.Color((0,1,1))
+            elif arg == "gray":
+                color = hou.Color((0.5, 0.5, 0.5))
+            elif arg == "white":
+                color = hou.Color((1,1,1))
+            elif arg == "black":
+                color = hou.Color((0,0,0))
+            else:
+                color = hou.Color((0,0,0))
+                
+        elif len(args) == 3:
+            color = hou.Color(args)
+        else:
+            return HouQuery(data=returnData, prevData=self._data)
+
+        args = self.unshiftTuple("setColor", (color,))
+        return self._callAttrWithMethodName(*args)
+
 
     def destroy(self, *args, **kwargs):
         args = self.unshiftTuple("destroy", args)
