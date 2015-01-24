@@ -1,5 +1,6 @@
 import os
 import sys
+from functools import partial
 
 import hou
 
@@ -19,9 +20,28 @@ class HouQuery(SQueryCommon):
         self._data = data
         self._prevData = prevData
         self._printContent(self._data)
+        self._methods = {
+            "allowEditingOfContents":self._callAttrWithMethodName,
+            "cook":self._callAttrWithMethodName,
+            "collapseIntoSubnet":self._callAttrWithMethodName,
+            "matchCurrentDefinition":self._callAttrWithMethodName,
+            "destroyUserData":self._callAttrWithMethodName,
+            "setDisplayFlag":self._callAttrWithMethodName,
+            "setName":self._callAttrWithMethodName,
+            "setRenderFlag":self._callAttrWithMethodName,
+            "setSelected":self._callAttrWithMethodName,
+            "setUserData":self._callAttrWithMethodName,
+        }
 
         if initValue:
             self._init(initValue)
+
+    def __getattr__(self, attr):
+        if attr in self._methods:
+            method = self._methods[attr]
+            return partial(method, attr)
+        else:
+            return SQueryCommon.__getattr__(self, attr)
 
     def _init(self, initValue):
         contexts = ["obj", "shop", "out"]
@@ -620,72 +640,62 @@ class HouQuery(SQueryCommon):
     # NODE STATE
     #################
 
-    def select(self):
+    def select(self, type="replace"):
         """
         Convenience method for the setSelected(True)
         """
-        self.setSelected(True)
+        if type == "replace":
+            selected = hou.selectedNodes()
+            for node in selected:
+                node.setSelected(False)
+            return self.setSelected(True)
+        elif type == "add":
+            return self.setSelected(True)
+        else:
+            return self.setSelected(True)
 
     def deselect(self):
         """
         Convenience method for the setSelected(False)
         """
-        self.setSelected(False)
+        return self.setSelected(False)
 
     def show(self):
         """
         Convenience method for setDisplayFlag(True)
         """
-        self.setDisplayFlag(True)
+        return self.setDisplayFlag(True)
 
     def hide(self):
         """
         Convenience method for setDisplayFlag(False)
         """
-        self.setDisplayFlag(False)
+        return self.setDisplayFlag(False)
 
     def _callAttrWithMethodName(self, *args, **kwargs):
         # deleting the _sQueryMethodName that comes from the decorator
         # to have it not passed to underlying Hou objects
-        methodName = kwargs.get("_sQueryMethodName")
-        del kwargs["_sQueryMethodName"]
+        methodName = args[0]
+        otherArgs = args[1:]
 
         self._getAttrMultiple(self._data, **{"methods":
-                [{"name":methodName, "args":args, "kwargs":kwargs}]})
+                [{"name":methodName, "args":otherArgs, "kwargs":kwargs}]})
         return HouQuery(data=self._data)
 
-    @sq.methodName
-    def allowEditingOfContents(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
-    def setName(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
-    def setDisplayFlag(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
-    def setRenderFlag(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
-    def setSelected(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
-    def setUserData(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
-    def destroyUserData(self, *args, **kwargs):
-        return self._callAttrWithMethodName(*args, **kwargs)
-
-    @sq.methodName
     def destroy(self, *args, **kwargs):
+        args = self.unshiftTuple("destroy", args)
         self._callAttrWithMethodName(*args, **kwargs)
         return HouQuery(data=None)
+
+    def unshiftTuple(self, name, givenTuple):
+        content = list(givenTuple)
+        newContent = []
+        for index in range(len(content)+1):
+            if index == 0:
+                newContent.append(name)
+            else:
+                newContent.append(content[index-1])
+        return tuple(newContent)
 
     #################
     # NODE CREATION / DELETION

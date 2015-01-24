@@ -1,14 +1,5 @@
 import fnmatch
 
-def methodName(fn):
-    def inner(*args, **kwargs):
-        """
-        feeds the name of the method as an argument to the method itself
-        """
-        kwargs["_sQueryMethodName"] = fn.func_name
-        fn(*args, **kwargs)
-    return inner
-
 class SQueryCommon(object):
     def __init__(self, initValue=None, data=[]):
         self._data = data
