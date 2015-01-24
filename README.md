@@ -126,6 +126,6 @@ These are the methods that you can use to perform various operations optionally 
 - each
 
 ###Known Issues
-- Houdini Native Methods will return None when run and hence will break the chaining, best to have them as last methods to run
+- seems like [attr!=value] is not working as expected
 - Setting expressions using setAttr is problematic
 - setAttr is not tested on locked, keyframed, etc... attributes.
