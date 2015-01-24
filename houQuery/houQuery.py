@@ -682,6 +682,17 @@ class HouQuery(SQueryCommon):
         """
         return self.setDisplayFlag(False)
 
+    def layout(self):
+        """
+        Convenience method for layoutChildren() that works on the nodes itself
+        """
+        kwargs = {}
+        kwargs["child_nodes"] = tuple(self._data)
+        parents = self.parent()
+        self._getAttrMultiple(parents._data, **{"methods":
+                [{"name":"layoutChildren", "kwargs":kwargs}]})
+        return HouQuery(data=self._data)
+
     def move(self, *args):
         """
         Convenience method for hou.Node.move()
@@ -693,6 +704,19 @@ class HouQuery(SQueryCommon):
         if len(args) > 1:
             pos = hou.Vector2(args[0], args[1])
         args = self.unshiftTuple("move", (pos,))
+        return self._callAttrWithMethodName(*args)
+
+    def setPosition(self, *args):
+        """
+        Convenience method for hou.Node.setPosition()
+        """
+        if not args:
+            return HouQuery(data=returnData, prevData=self._data)
+        if len(args) == 1:
+            pos = hou.Vector2(args[0],0)
+        if len(args) > 1:
+            pos = hou.Vector2(args[0], args[1])
+        args = self.unshiftTuple("setPosition", (pos,))
         return self._callAttrWithMethodName(*args)
 
     def setColor(self, *args):

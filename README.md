@@ -107,7 +107,9 @@ These are the methods that you can use to perform various operations optionally 
 - move
 - setColor
 - setDisplayFlag
+- setLayout
 - setName
+- setPosition
 - setRenderFlag
 - setSelected
 - setUserData
