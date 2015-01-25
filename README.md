@@ -129,3 +129,6 @@ These are the methods that you can use to perform various operations optionally 
 - seems like [attr!=value] is not working as expected
 - Setting expressions using setAttr is problematic
 - setAttr is not tested on locked, keyframed, etc... attributes.
+
+###Credits & Contributions
+- Uses eyevex takes library by Dan Schneider (http://dansportfolio.com/)
