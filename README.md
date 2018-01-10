@@ -1,15 +1,15 @@
-#sQuery (Scene Query)
+# sQuery (Scene Query)
 
-##Summary
+## Summary
 **sQuery** (short for SceneQuery) is a **Python** library that provides an easy interface for making scene queries and modifications in 3D Animation Applications. It is inspired by the popular Javascript Web Development Library **jQuery**. Currently **Houdini** version is in development, **Maya** support is planned.
 
-##Aims
+## Aims
 - Provide intuitive and easy-to-use commands to make scene queries and modifications in 3d Applications.
 - Help artists with minimal programming knowledge to perform rather complex operations.
 - Help programmers to perform repetitive tasks easier.
 - Create a platform that can provide a unified interface for similar operations across different applications.
 
-##How to use it?
+## How to use it?
 - **Warning:This is a work in progress and current API might break. Use only for testing purposes.**
 Currently only Houdini version has useful functionality implemented. Maya version is implemented but functionality is lacking. 
 
@@ -58,10 +58,10 @@ selects all the children in obj context with name that matches to the *geo* patt
 chooses the alembic type children of the result, replaces the v002 attribute on the alembic nodes file_path parameter with v003, creates a user data on them called "is_altered" with the value "true" and adds those alembics to the bundle "alembics_inside_instances" and selects the next node if it is of type switch and creates a delete node after them with the 'group' parameter set to '*_arms_*', toggles the affect number parameter on this delete nodes (meaning if it is on, makes it off or vice versa) and then selects this 'delete' node that was created.
 """
 ```
-##API
+## API
 The full API is not yet documented but here are some of the commands that are currently available.
 
-###Selectors
+### Selectors
 These are some of the selectors that you can use inside selection methods.
 - "foo" : selects by name where it is "foo"
 - "\*foo\*" : selects by name where it matches to the pattern \*foo\*
@@ -74,7 +74,7 @@ These are some of the selectors that you can use inside selection methods.
 - "[foo^=bar]" : selects by attribute name where attribute "foo" starts with the word "bar"
 - "[foo$=bar]" : selects by attribute name where attribute "foo" ends with the word "bar"
 
-###Selection Methods
+### Selection Methods
 These are the methods that you can use to perform various operations optionally using the selectors above as arguments
 - addBack
 - remove
@@ -88,16 +88,16 @@ These are the methods that you can use to perform various operations optionally 
 - hasChildren
 - hasSubChildren
 
-###Selection Methods that don't work with selectors
+### Selection Methods that don't work with selectors
 - selection
 - bundle
 
-###Attribute Related Methods
+### Attribute Related Methods
 - setAttr
 - replaceAttrValue
 - toggle
 
-###Supported Houdini Native Methods
+### Supported Houdini Native Methods
 - allowEditingOfContents
 - cook
 - coolapseIntoSubnet
@@ -114,21 +114,21 @@ These are the methods that you can use to perform various operations optionally 
 - setSelected
 - setUserData
 
-###Other Scene Operations
+### Other Scene Operations
 - addToBundle
 - removeFromBundle
 - createNodeInside
 - createNodeAfter
 - createNodeBefore
 
-###Operations on the sQuery object
+### Operations on the sQuery object
 - get
 - each
 
-###Known Issues
+### Known Issues
 - seems like [attr!=value] is not working as expected
 - Setting expressions using setAttr is problematic
 - setAttr is not tested on locked, keyframed, etc... attributes.
 
-###Credits & Contributions
+### Credits & Contributions
 - Uses eyevex takes library by Dan Schneider (http://dansportfolio.com/)
