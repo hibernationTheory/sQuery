@@ -44,7 +44,7 @@ class HouQuery(SQueryCommon):
             return SQueryCommon.__getattr__(self, attr)
 
     def _init(self, initValue):
-        contexts = ["obj", "shop", "out"]
+        contexts = ["obj", "shop", "out", "mat"]
         msg = "sQuery is initialized in: "
         if isinstance(initValue, str) and initValue.lower() in contexts:
             self._data = [hou.node("/" + initValue)]
